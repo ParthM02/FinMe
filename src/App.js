@@ -6,11 +6,21 @@ function App() {
   const [watchlist, setWatchlist] = useState([]);
   const [input, setInput] = useState('');
 
-  const handleAddStock = (e) => {
+  const handleAddStock = async (e) => {
     e.preventDefault();
-    if (input.trim() && !watchlist.includes(input.trim().toUpperCase())) {
-      setWatchlist([...watchlist, input.trim().toUpperCase()]);
+    const symbol = input.trim().toUpperCase();
+    if (symbol && !watchlist.includes(symbol)) {
+      setWatchlist([...watchlist, symbol]);
       setInput('');
+
+      // Call your Vercel API and print options data
+      try {
+        const response = await fetch(`/api/optiondata?symbol=${symbol}`);
+        const data = await response.json();
+        console.log(`Options data for ${symbol}:`, data);
+      } catch (err) {
+        console.error('Error fetching options data:', err);
+      }
     }
   };
 
