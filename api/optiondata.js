@@ -7,12 +7,14 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      `https://query1.finance.yahoo.com/v7/finance/options/${symbol}`,
+      `https://api.nasdaq.com/api/quote/${symbol}/option-chain?assetclass=stocks`,
       {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
-          "Accept": "application/json",
+          "Accept": "application/json, text/plain, */*",
+          "Referer": `https://www.nasdaq.com/market-activity/stocks/${symbol}/option-chain`,
+          "Origin": "https://www.nasdaq.com",
         },
       }
     );
