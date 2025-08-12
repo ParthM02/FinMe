@@ -26,8 +26,7 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     const allowedOrigins = [
-      "https://fin-me.vercel.app",
-      "http://localhost:3000"
+      "https://fin-me.vercel.app"
     ];
     const origin = req.headers.origin;
     if (allowedOrigins.includes(origin)) {

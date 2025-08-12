@@ -18,10 +18,11 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   font-size: calc(10px + 2vmin);
   color: white;
+  padding-top: 4.5rem; /* Added padding-top to avoid overlap */
 }
 
 .App-link {
@@ -35,6 +36,49 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.search-container {
+  align-self: flex-start;
+  margin-top: 1rem;
+  margin-left: 1rem;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-left: 1rem;
+}
+
+.search-input {
+  width: 300px;
+  height: 10px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #61dafb;
+  font-size: 1rem;
+  outline: none;
+  margin-right: 0.5rem;
+  background: #222;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(97,218,251,0.1);
+  transition: border 0.2s;
+}
+
+.search-btn {
+  width: 100px;
+  height: 35px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  background: #61dafb;
+  color: #222;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 .watchlist-container {
@@ -94,4 +138,50 @@
   border-bottom: 1px solid #444;
   font-size: 1.1rem;
   color: #61dafb;
+}
+
+.options-table-container {
+  margin-top: 2rem;
+  width: 800px;
+}
+
+.options-table {
+  width: 800px;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+
+.options-table th, .options-table td {
+  border: 1px solid #ccc;
+  padding: 0.2rem;
+  text-align: center;
+  font-size: 0.7rem;
+  word-break: break-word;
+}
+
+.options-table th {
+  background: #222;
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+.navbar {
+  width: 100%;
+  background: #181c22;
+  color: #61dafb;
+  padding: 1rem 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.navbar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 2rem;
+  letter-spacing: 2px;
 }
