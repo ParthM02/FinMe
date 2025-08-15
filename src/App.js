@@ -3,7 +3,8 @@ import { calculatePutCallRatio } from './optionAnalysis';
 import logo from './logo.svg';
 import './App.css';
 
-const useTestData = false;
+// Change when deploying to Vercel
+const useTestData = true;
 
 function App() {
   // Remove watchlist state
