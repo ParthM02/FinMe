@@ -125,14 +125,18 @@ export function getImpliedVolatility({
     maxIter = 100
 }) {
     if (T <= 0) {
+        console.log('Option has expired, no implied volatility can be calculated.');
         return null;
     }
     if (marketPrice <= 0) {
+        console.log('Invalid market price.');
         return null;
     }
 
     const intrinsic = intrinsicValue(S * Math.exp(-q * T), K * Math.exp(-r * T), optionType);
+    console.log('Intrinsic value:', intrinsic);
     if (marketPrice < intrinsic  - 1e-8) {
+        console.log('Market price is below intrinsic value, no implied volatility can be calculated.');
         return null;
     }
 
