@@ -99,6 +99,9 @@ const App = () => {
           }
           setOptionData(data);
 
+          // Log the fetched API data
+          console.log('API option data:', data);
+
           // Calculate put/call ratio from unified format
           const options = data?.data?.optionChain?.result?.options || [];
           let putVolume = 0;
