@@ -99,19 +99,17 @@ const App = () => {
           }
           setOptionData(data);
 
-          // Log the fetched API data
-          console.log('API option data:', data);
-
-          // Calculate put/call ratio from unified format
-          const options = data?.data?.optionChain?.result?.options || [];
+          // Correct parsing for put/call ratio
+          const rows = data?.data?.table?.rows || [];
           let putVolume = 0;
           let callVolume = 0;
-          options.forEach(opt => {
-            if (opt.puts) {
-              putVolume += opt.puts.reduce((sum, p) => sum + (p.volume || 0), 0);
+          rows.forEach(row => {
+            // Only count rows with numeric volumes
+            if (row.c_Volume && !isNaN(row.c_Volume) && row.c_Volume !== '--') {
+              callVolume += Number(row.c_Volume);
             }
-            if (opt.calls) {
-              callVolume += opt.calls.reduce((sum, c) => sum + (c.volume || 0), 0);
+            if (row.p_Volume && !isNaN(row.p_Volume) && row.p_Volume !== '--') {
+              putVolume += Number(row.p_Volume);
             }
           });
           if (callVolume > 0) {
