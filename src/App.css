@@ -247,6 +247,51 @@ body {
     height: 100%;
 }
 
+/* Put/Call Ratio Widget */
+.put-call-widget {
+  background: #111;
+  border-radius: 1.5rem;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  margin: 0 auto;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+}
+
+.put-call-title {
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.put-call-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.put-call-value.bullish {
+  color: #22c55e; /* green-500 */
+}
+
+.put-call-value.bearish {
+  color: #ef4444; /* red-500 */
+}
+
+.put-call-signal {
+  font-size: 1rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
