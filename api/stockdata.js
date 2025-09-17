@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     // Previous close (OHLCV for previous day)
     const prevCloseUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker.toUpperCase()}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`;
     const previousClose = await getJSON(prevCloseUrl);
-    const vwap = previousClose?.results?.[0]?.vwap ?? null;
+    const vwap = previousClose?.results?.[0]?.vw ?? null;
 
     res.status(200).json({
       previousClose,
