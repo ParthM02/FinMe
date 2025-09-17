@@ -275,7 +275,7 @@ const App = () => {
                       {vwap}
                     </div>
                     <div className="put-call-signal">
-                      {close > vwap ? 'Bullish (Uptrend)' : 'Bearish (Downtrend)'}
+                      {close > vwap ? 'Bullish' : 'Bearish'}
                     </div>
                     <div style={{ fontSize: '1rem', color: '#9ca3af', marginTop: '0.25rem', textAlign: 'center' }}>
                       Close: {close}
