@@ -321,6 +321,14 @@ body {
   color: #38bdf8; /* sky-400 */
 }
 
+.vwap-value.bullish {
+  color: #22c55e; /* green-500 */
+}
+
+.vwap-value.bearish {
+  color: #ef4444; /* red-500 */
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {

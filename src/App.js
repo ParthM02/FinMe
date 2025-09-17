@@ -9,6 +9,7 @@ const App = () => {
   const [putCallRatio, setPutCallRatio] = useState(null);
   const [useTestData, setUseTestData] = useState(false);
   const [vwap, setVwap] = useState(null);
+  const [close, setClose] = useState(null);
   const widgetRef = useRef(null);
   const chartRef = useRef(null); // Add this line
 
@@ -134,8 +135,10 @@ const App = () => {
           const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
           const data = await response.json();
           setVwap(data.vwap);
+          setClose(data.close);
         } catch (error) {
           setVwap(null);
+          setClose(null);
         }
       }
     };
@@ -261,10 +264,22 @@ const App = () => {
                   <span>Loading put/call ratio...</span>
                 )
               ) : activeTab === 'Technical' ? (
-                vwap !== null ? (
+                vwap !== null && close !== null ? (
                   <div className="vwap-widget">
                     <div className="vwap-title">VWAP</div>
-                    <div className="vwap-value">{vwap}</div>
+                    <div
+                      className={`vwap-value ${
+                        close > vwap ? 'bullish' : 'bearish'
+                      }`}
+                    >
+                      {vwap}
+                    </div>
+                    <div className="put-call-signal">
+                      {close > vwap ? 'Bullish (Uptrend)' : 'Bearish (Downtrend)'}
+                    </div>
+                    <div style={{ fontSize: '1rem', color: '#9ca3af', marginTop: '0.25rem', textAlign: 'center' }}>
+                      Close: {close}
+                    </div>
                   </div>
                 ) : (
                   <span>Loading VWAP...</span>

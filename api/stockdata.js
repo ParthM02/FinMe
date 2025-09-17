@@ -18,10 +18,12 @@ export default async function handler(req, res) {
     const prevCloseUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker.toUpperCase()}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`;
     const previousClose = await getJSON(prevCloseUrl);
     const vwap = previousClose?.results?.[0]?.vw ?? null;
+    const close = previousClose?.results?.[0]?.c ?? null;
 
     res.status(200).json({
       previousClose,
-      vwap
+      vwap,
+      close
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
