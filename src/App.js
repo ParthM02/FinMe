@@ -8,6 +8,7 @@ const App = () => {
   const [optionData, setOptionData] = useState(null);
   const [putCallRatio, setPutCallRatio] = useState(null);
   const [useTestData, setUseTestData] = useState(false);
+  const [vwap, setVwap] = useState(null);
   const widgetRef = useRef(null);
   const chartRef = useRef(null); // Add this line
 
@@ -126,6 +127,21 @@ const App = () => {
     fetchOptionData();
   }, [activeTab, searchTicker, useTestData]);
 
+  useEffect(() => {
+    const fetchTechnicalData = async () => {
+      if (activeTab === 'Technical' && searchTicker) {
+        try {
+          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
+          const data = await response.json();
+          setVwap(data.vwap);
+        } catch (error) {
+          setVwap(null);
+        }
+      }
+    };
+    fetchTechnicalData();
+  }, [activeTab, searchTicker]);
+
   return (
     <div className="app-container">
       {/* Header */}
@@ -243,6 +259,15 @@ const App = () => {
                   </div>
                 ) : (
                   <span>Loading put/call ratio...</span>
+                )
+              ) : activeTab === 'Technical' ? (
+                vwap !== null ? (
+                  <div className="vwap-widget">
+                    <div className="vwap-title">VWAP</div>
+                    <div className="vwap-value">{vwap}</div>
+                  </div>
+                ) : (
+                  <span>Loading VWAP...</span>
                 )
               ) : (
                 `${activeTab} report breakdown will appear here.`

@@ -292,6 +292,35 @@ body {
   letter-spacing: 0.05em;
 }
 
+/* VWAP Widget */
+.vwap-widget {
+  background: #111;
+  border-radius: 1.5rem;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  margin: 0 auto;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+}
+
+.vwap-title {
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.vwap-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  text-align: center;
+  color: #38bdf8; /* sky-400 */
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {

@@ -14,18 +14,14 @@ export default async function handler(req, res) {
       return await response.json();
     };
 
-    // Aggregates (daily OHLCV for last year)
-    const aggUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker.toUpperCase()}/range/1/day/2024-01-01/2024-12-31?adjusted=true&sort=desc&limit=120&apiKey=${POLYGON_API_KEY}`;
-    const aggregates = await getJSON(aggUrl);
-
     // Previous close (OHLCV for previous day)
     const prevCloseUrl = `https://api.polygon.io/v2/aggs/ticker/${ticker.toUpperCase()}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`;
     const previousClose = await getJSON(prevCloseUrl);
-
+    const vwap = previousClose?.results?.[0]?.vwap ?? null;
 
     res.status(200).json({
-      aggregates,
-      previousClose
+      previousClose,
+      vwap
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
