@@ -21,8 +21,7 @@ export default async function handler(req, res) {
     const close = previousClose?.results?.[0]?.c ?? null;
 
     // Fetch recent news headlines with sentiment
-    const newsUrl = 'https://api.polygon.io/v2/reference/news?ticker=${ticker.toUpperCase()}&order=asc&limit=10&sort=published_utc&apiKey=${POLYGON_API_KEY}'
-    //const newsUrl = `https://api.polygon.io/v2/reference/news?ticker=${ticker.toUpperCase()}&limit=10&apiKey=${POLYGON_API_KEY}`;
+    const newsUrl = `https://api.polygon.io/v2/reference/news?ticker=${ticker.toUpperCase()}&order=asc&limit=10&sort=published_utc&apiKey=${POLYGON_API_KEY}`;
     const newsData = await getJSON(newsUrl);
 
     const headlines = (newsData.results || []).map(item => ({
