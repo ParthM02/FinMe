@@ -20,10 +20,23 @@ export default async function handler(req, res) {
     const vwap = previousClose?.results?.[0]?.vw ?? null;
     const close = previousClose?.results?.[0]?.c ?? null;
 
+    // Fetch recent news headlines with sentiment
+    const newsUrl = `https://api.polygon.io/v2/reference/news?ticker=${ticker.toUpperCase()}&limit=10&apiKey=${POLYGON_API_KEY}`;
+    const newsData = await getJSON(newsUrl);
+
+    const headlines = (newsData.results || []).map(item => ({
+      title: item.title,
+      url: item.article_url,
+      published_utc: item.published_utc,
+      sentiment: item.insight?.sentiment ?? null,
+      sentiment_score: item.insight?.score ?? null
+    }));
+
     res.status(200).json({
       previousClose,
       vwap,
-      close
+      close,
+      headlines
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
