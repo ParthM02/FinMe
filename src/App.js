@@ -308,34 +308,42 @@ const App = () => {
                 )
               ) : activeTab === 'Sentiment' ? (
                 <div className="sentiment-widget">
-                  <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
+                  <table className="sentiment-table">
                     <thead>
-                      <tr style={{ borderBottom: '1px solid #333' }}>
-                        <th style={{ textAlign: 'left', padding: '0.5rem', color: '#d1d5db' }}>Headline</th>
-                        <th style={{ textAlign: 'left', padding: '0.5rem', color: '#d1d5db' }}>Published</th>
-                        <th style={{ textAlign: 'left', padding: '0.5rem', color: '#d1d5db' }}>Sentiment</th>
-                        <th style={{ textAlign: 'left', padding: '0.5rem', color: '#d1d5db' }}>Score</th>
+                      <tr>
+                        <th>Headline</th>
+                        <th>Published</th>
+                        <th>Sentiment</th>
                       </tr>
                     </thead>
                     <tbody>
                       {headlines.length === 0 ? (
                         <tr>
-                          <td colSpan={4} style={{ color: '#9ca3af', padding: '1rem', textAlign: 'center' }}>Loading headlines...</td>
+                          <td colSpan={3} style={{ color: '#9ca3af', textAlign: 'center' }}>Loading headlines...</td>
                         </tr>
                       ) : (
                         headlines.map((item, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #222' }}>
-                            <td style={{ padding: '0.5rem' }}>
-                              <a href={item.url} target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', textDecoration: 'underline' }}>
+                          <tr key={idx}>
+                            <td>
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="sentiment-link"
+                              >
                                 {item.title}
                               </a>
                             </td>
-                            <td style={{ padding: '0.5rem', color: '#9ca3af' }}>{formatDate(item.published_utc)}</td>
-                            <td style={{ padding: '0.5rem', color: item.sentiment === 'positive' ? '#22c55e' : item.sentiment === 'negative' ? '#ef4444' : '#d1d5db' }}>
+                            <td style={{ color: '#9ca3af' }}>{formatDate(item.published_utc)}</td>
+                            <td style={{
+                              color:
+                                item.sentiment === 'positive'
+                                  ? '#22c55e'
+                                  : item.sentiment === 'negative'
+                                  ? '#ef4444'
+                                  : '#d1d5db'
+                            }}>
                               {item.sentiment ?? 'N/A'}
-                            </td>
-                            <td style={{ padding: '0.5rem', color: '#d1d5db' }}>
-                              {item.sentiment_score !== null ? item.sentiment_score : 'N/A'}
                             </td>
                           </tr>
                         ))

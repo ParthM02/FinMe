@@ -329,6 +329,49 @@ body {
   color: #ef4444; /* red-500 */
 }
 
+/* Sentiment Widget */
+.sentiment-widget {
+  margin-top: 1rem;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.sentiment-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(17, 24, 39, 0.7);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+}
+
+.sentiment-table th,
+.sentiment-table td {
+  border: 1px solid #333;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.sentiment-table th {
+  background: #1a1a1a;
+  color: #d1d5db;
+  font-weight: 500;
+}
+
+.sentiment-table td {
+  color: #d1d5db;
+}
+
+.sentiment-link {
+  color: #fff;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.sentiment-link:hover {
+  color: #38bdf8;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
