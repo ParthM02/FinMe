@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       title: item.title,
       url: item.article_url,
       published_utc: item.published_utc,
-      sentiment: item.insights
+      sentiment: item.insights[0].sentiment
     }));
 
     res.status(200).json({
