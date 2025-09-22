@@ -369,26 +369,26 @@ const App = () => {
                 </div>
               ) : activeTab === 'Fundamental' ? (
                 <div className="volume-bar-widget">
-                  <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Avg Daily Volume (last 4 settlements)</div>
+                  <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Days to Cover (last 4 settlements)</div>
                   {shortInterest.length < 4 ? (
-                    <span>Loading volume data...</span>
+                    <span>Loading data...</span>
                   ) : (
                     (() => {
                       // Get last 4 settlement dates (descending)
                       const bars = shortInterest.slice(0, 4).map(item => ({
                         date: item.settlement_date,
-                        volume: item.avg_daily_volume
+                        value: item.days_to_cover
                       }));
 
                       // Calculate colors and bullish/bearish
                       let lastDirection = null;
                       const barColors = bars.map((bar, idx, arr) => {
                         if (idx === 0) return '#38bdf8'; // first bar, neutral color
-                        const prev = arr[idx - 1].volume;
-                        if (bar.volume > prev) {
+                        const prev = arr[idx - 1].value;
+                        if (bar.value > prev) {
                           lastDirection = 'bullish';
                           return '#22c55e'; // green
-                        } else if (bar.volume < prev) {
+                        } else if (bar.value < prev) {
                           lastDirection = 'bearish';
                           return '#ef4444'; // red
                         } else {
@@ -397,13 +397,13 @@ const App = () => {
                       });
 
                       // Find max for scaling
-                      const maxVolume = Math.max(...bars.map(b => b.volume || 0)) || 1;
+                      const maxValue = Math.max(...bars.map(b => b.value || 0)) || 1;
 
                       return (
                         <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
                           <svg width="100%" height="80" viewBox="0 0 320 80">
                             {bars.map((bar, idx) => {
-                              const height = Math.max(10, (bar.volume / maxVolume) * 60);
+                              const height = Math.max(10, (bar.value / maxValue) * 60);
                               return (
                                 <g key={idx}>
                                   <rect
@@ -421,7 +421,7 @@ const App = () => {
                                     fontSize="12"
                                     fill="#d1d5db"
                                   >
-                                    {bar.volume?.toLocaleString() ?? 'N/A'}
+                                    {bar.value?.toFixed(2) ?? 'N/A'}
                                   </text>
                                   <text
                                     x={40 + idx * 70}
