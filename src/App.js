@@ -374,30 +374,19 @@ const App = () => {
                     <span>Loading data...</span>
                   ) : (
                     (() => {
-                      // Get last 4 settlement dates (descending)
-                      const bars = shortInterest.slice(0, 4).map(item => ({
+                      // Get last 4 settlement dates (descending), then reverse for oldest to newest
+                      const bars = shortInterest.slice(0, 4).reverse().map(item => ({
                         date: item.settlement_date,
                         value: item.days_to_cover
                       }));
 
-                      // Calculate colors and bullish/bearish
-                      let lastDirection = null;
-                      const barColors = bars.map((bar, idx, arr) => {
-                        if (idx === 0) return '#38bdf8'; // first bar, neutral color
-                        const prev = arr[idx - 1].value;
-                        if (bar.value > prev) {
-                          lastDirection = 'bullish';
-                          return '#22c55e'; // green
-                        } else if (bar.value < prev) {
-                          lastDirection = 'bearish';
-                          return '#ef4444'; // red
-                        } else {
-                          return '#d1d5db'; // gray
-                        }
-                      });
-
                       // Find max for scaling
                       const maxValue = Math.max(...bars.map(b => b.value || 0)) || 1;
+
+                      // Determine bullish/bearish from most recent value
+                      const latest = bars[bars.length - 1]?.value;
+                      const signal = latest > 3 ? 'Bearish' : 'Bullish';
+                      const signalColor = latest > 3 ? '#ef4444' : '#22c55e';
 
                       return (
                         <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
@@ -412,7 +401,7 @@ const App = () => {
                                     width={40}
                                     height={height}
                                     rx={8}
-                                    fill={barColors[idx]}
+                                    fill="#38bdf8"
                                   />
                                   <text
                                     x={40 + idx * 70}
@@ -428,7 +417,7 @@ const App = () => {
                                     y={78}
                                     textAnchor="middle"
                                     fontSize="11"
-                                    fill="#9ca3af"
+                                    fill="#fff"
                                   >
                                     {bar.date?.slice(5)}
                                   </text>
@@ -440,9 +429,9 @@ const App = () => {
                             textAlign: 'center',
                             marginTop: '0.5rem',
                             fontWeight: 500,
-                            color: lastDirection === 'bullish' ? '#22c55e' : lastDirection === 'bearish' ? '#ef4444' : '#d1d5db'
+                            color: signalColor
                           }}>
-                            {lastDirection ? (lastDirection === 'bullish' ? 'Bullish' : 'Bearish') : 'Neutral'}
+                            {signal}
                           </div>
                         </div>
                       );
