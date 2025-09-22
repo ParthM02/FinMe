@@ -11,6 +11,7 @@ const App = () => {
   const [vwap, setVwap] = useState(null);
   const [close, setClose] = useState(null);
   const [headlines, setHeadlines] = useState([]);
+  const [shortInterest, setShortInterest] = useState([]);
   const widgetRef = useRef(null);
   const chartRef = useRef(null); // Add this line
 
@@ -161,6 +162,21 @@ const App = () => {
     fetchSentimentData();
   }, [activeTab, searchTicker]);
 
+  useEffect(() => {
+    const fetchFundamentalData = async () => {
+      if (activeTab === 'Fundamental' && searchTicker) {
+        try {
+          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
+          const data = await response.json();
+          setShortInterest(data.shortInterest || []);
+        } catch (error) {
+          setShortInterest([]);
+        }
+      }
+    };
+    fetchFundamentalData();
+  }, [activeTab, searchTicker]);
+
   // Add this helper for formatting date
   const formatDate = (utcString) => {
     const date = new Date(utcString);
@@ -208,7 +224,7 @@ const App = () => {
           />
           <button type="submit" className="search-button">
             <svg xmlns="http://www.w3.org/2000/svg" className="icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-6zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
             </svg>
           </button>
         </form>
@@ -350,6 +366,88 @@ const App = () => {
                       )}
                     </tbody>
                   </table>
+                </div>
+              ) : activeTab === 'Fundamental' ? (
+                <div className="volume-bar-widget">
+                  <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Avg Daily Volume (last 4 settlements)</div>
+                  {shortInterest.length < 4 ? (
+                    <span>Loading volume data...</span>
+                  ) : (
+                    (() => {
+                      // Get last 4 settlement dates (descending)
+                      const bars = shortInterest.slice(0, 4).map(item => ({
+                        date: item.settlement_date,
+                        volume: item.avg_daily_volume
+                      }));
+
+                      // Calculate colors and bullish/bearish
+                      let lastDirection = null;
+                      const barColors = bars.map((bar, idx, arr) => {
+                        if (idx === 0) return '#38bdf8'; // first bar, neutral color
+                        const prev = arr[idx - 1].volume;
+                        if (bar.volume > prev) {
+                          lastDirection = 'bullish';
+                          return '#22c55e'; // green
+                        } else if (bar.volume < prev) {
+                          lastDirection = 'bearish';
+                          return '#ef4444'; // red
+                        } else {
+                          return '#d1d5db'; // gray
+                        }
+                      });
+
+                      // Find max for scaling
+                      const maxVolume = Math.max(...bars.map(b => b.volume || 0)) || 1;
+
+                      return (
+                        <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
+                          <svg width="100%" height="80" viewBox="0 0 320 80">
+                            {bars.map((bar, idx) => {
+                              const height = Math.max(10, (bar.volume / maxVolume) * 60);
+                              return (
+                                <g key={idx}>
+                                  <rect
+                                    x={20 + idx * 70}
+                                    y={80 - height}
+                                    width={40}
+                                    height={height}
+                                    rx={8}
+                                    fill={barColors[idx]}
+                                  />
+                                  <text
+                                    x={40 + idx * 70}
+                                    y={80 - height - 8}
+                                    textAnchor="middle"
+                                    fontSize="12"
+                                    fill="#d1d5db"
+                                  >
+                                    {bar.volume?.toLocaleString() ?? 'N/A'}
+                                  </text>
+                                  <text
+                                    x={40 + idx * 70}
+                                    y={78}
+                                    textAnchor="middle"
+                                    fontSize="11"
+                                    fill="#9ca3af"
+                                  >
+                                    {bar.date?.slice(5)}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </svg>
+                          <div style={{
+                            textAlign: 'center',
+                            marginTop: '0.5rem',
+                            fontWeight: 500,
+                            color: lastDirection === 'bullish' ? '#22c55e' : lastDirection === 'bearish' ? '#ef4444' : '#d1d5db'
+                          }}>
+                            {lastDirection ? (lastDirection === 'bullish' ? 'Bullish' : 'Bearish') : 'Neutral'}
+                          </div>
+                        </div>
+                      );
+                    })()
+                  )}
                 </div>
               ) : (
                 `${activeTab} report breakdown will appear here.`

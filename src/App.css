@@ -372,6 +372,17 @@ body {
   color: #38bdf8;
 }
 
+/* Volume Bar Widget */
+.volume-bar-widget {
+  background: #111;
+  border-radius: 1.5rem;
+  padding: 2rem 1rem;
+  margin: 0 auto;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+  max-width: 340px;
+  text-align: center;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
