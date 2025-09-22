@@ -32,16 +32,14 @@ export default async function handler(req, res) {
     }));
 
     // Fetch short interest data (last 5 settlement dates)
-    const shortInterestUrl = `https://api.polygon.io/v3/reference/shorts?ticker=${ticker.toUpperCase()}&limit=5&order=desc&apiKey=${POLYGON_API_KEY}`;
+    const shortInterestUrl = `https://api.polygon.io/v1/reference/short-interest?ticker=${ticker.toUpperCase()}&limit=5&sort=settlement_date.desc&apiKey=${POLYGON_API_KEY}`;
     const shortInterestData = await getJSON(shortInterestUrl);
 
     const shortInterest = (shortInterestData.results || []).map(item => ({
       settlement_date: item.settlement_date,
       short_interest: item.short_interest,
-      short_exempt_volume: item.short_exempt_volume,
-      total_volume: item.total_volume,
-      short_interest_ratio: item.short_interest_ratio,
-      avg_daily_volume: item.avg_daily_volume
+      avg_daily_volume: item.avg_daily_volume,
+      days_to_cover: item.days_to_cover
     }));
 
     res.status(200).json({
