@@ -424,6 +424,40 @@ body {
   fill: #fde047;
 }
 
+/* Short Squeeze Widget */
+.short-squeeze-widget {
+  background: #111;
+  border-radius: 1.5rem;
+  padding: 1.5rem 1rem;
+  margin: 1rem auto 0 auto;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  max-width: 340px;
+  text-align: center;
+}
+
+.short-squeeze-title {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.short-squeeze-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.short-squeeze-low {
+  color: #ef4444;
+}
+
+.short-squeeze-moderate {
+  color: #fde047;
+}
+
+.short-squeeze-high {
+  color: #22c55e;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
