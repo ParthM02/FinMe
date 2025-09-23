@@ -370,24 +370,27 @@ const App = () => {
               ) : activeTab === 'Fundamental' ? (
                 <div className="volume-bar-widget">
                   <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Days to Cover (last 4 settlements)</div>
-                  {shortInterest.length < 4 ? (
+                  {shortInterest.length < 5 ? (
                     <span>Loading data...</span>
                   ) : (
                     (() => {
-                      // Get last 4 settlement dates (descending), then reverse for oldest to newest
-                      const bars = shortInterest.slice(0, 4).reverse().map(item => ({
+                      // Get last 5 settlement dates (descending), then reverse for oldest to newest
+                      const lastFive = shortInterest.slice(0, 5);
+                      // Only show last 4 bars, but compare each to previous value
+                      const bars = lastFive.slice(1).map((item, idx) => ({
                         date: item.settlement_date,
-                        value: item.days_to_cover
+                        value: item.days_to_cover,
+                        prevValue: lastFive[idx].days_to_cover
                       }));
 
                       // Find max for scaling
                       const maxValue = Math.max(...bars.map(b => b.value || 0)) || 1;
 
-                      // Compare most recent and previous value
+                      // Compare most recent and previous value for signal
                       const latest = bars[bars.length - 1]?.value;
-                      const previous = bars[bars.length - 2]?.value;
+                      const previous = bars[bars.length - 1]?.prevValue;
                       let signal = 'Neutral';
-                      let signalColor = '#d1d5db';
+                      let signalColor = '#fde047'; // yellow
                       if (latest > previous) {
                         signal = 'Bearish';
                         signalColor = '#ef4444';
@@ -395,6 +398,13 @@ const App = () => {
                         signal = 'Bullish';
                         signalColor = '#22c55e';
                       }
+
+                      // Bar colors based on comparison with previous
+                      const barColors = bars.map((bar) => {
+                        if (bar.value > bar.prevValue) return '#ef4444'; // red
+                        if (bar.value < bar.prevValue) return '#22c55e'; // green
+                        return '#fde047'; // yellow
+                      });
 
                       return (
                         <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
@@ -409,7 +419,7 @@ const App = () => {
                                     width={40}
                                     height={height}
                                     rx={8}
-                                    fill="#38bdf8"
+                                    fill={barColors[idx]}
                                   />
                                   <text
                                     x={40 + idx * 70}
