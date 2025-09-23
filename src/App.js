@@ -369,41 +369,37 @@ const App = () => {
                 </div>
               ) : activeTab === 'Fundamental' ? (
                 <div className="volume-bar-widget">
-                  <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>Days to Cover (last 4 settlements)</div>
+                  <div className="volume-bar-title">Days to Cover (last 4 settlements)</div>
                   {shortInterest.length < 5 ? (
                     <span>Loading data...</span>
                   ) : (
                     (() => {
-                      // Get last 5 settlement dates (descending), then reverse for oldest to newest
-                      const lastFive = shortInterest.slice(0, 5);
-                      // Only show last 4 bars, but compare each to previous value
+                      const lastFive = shortInterest.slice(0, 5).reverse();
                       const bars = lastFive.slice(1).map((item, idx) => ({
                         date: item.settlement_date,
                         value: item.days_to_cover,
                         prevValue: lastFive[idx].days_to_cover
                       }));
 
-                      // Find max for scaling
                       const maxValue = Math.max(...bars.map(b => b.value || 0)) || 1;
 
-                      // Compare most recent and previous value for signal
                       const latest = bars[bars.length - 1]?.value;
                       const previous = bars[bars.length - 1]?.prevValue;
                       let signal = 'Neutral';
-                      let signalColor = '#fde047'; // yellow
+                      let signalClass = 'neutral';
                       if (latest > previous) {
                         signal = 'Bearish';
-                        signalColor = '#ef4444';
+                        signalClass = 'bearish';
                       } else if (latest < previous) {
                         signal = 'Bullish';
-                        signalColor = '#22c55e';
+                        signalClass = 'bullish';
                       }
 
                       // Bar colors based on comparison with previous
-                      const barColors = bars.map((bar) => {
-                        if (bar.value > bar.prevValue) return '#ef4444'; // red
-                        if (bar.value < bar.prevValue) return '#22c55e'; // green
-                        return '#fde047'; // yellow
+                      const barClasses = bars.map((bar) => {
+                        if (bar.value > bar.prevValue) return 'bearish';
+                        if (bar.value < bar.prevValue) return 'bullish';
+                        return 'neutral';
                       });
 
                       return (
@@ -419,14 +415,13 @@ const App = () => {
                                     width={40}
                                     height={height}
                                     rx={8}
-                                    fill={barColors[idx]}
+                                    className={`volume-bar-rect ${barClasses[idx]}`}
                                   />
                                   <text
                                     x={40 + idx * 70}
                                     y={80 - height - 8}
                                     textAnchor="middle"
-                                    fontSize="12"
-                                    fill="#d1d5db"
+                                    className="volume-bar-value"
                                   >
                                     {bar.value?.toFixed(2) ?? 'N/A'}
                                   </text>
@@ -434,8 +429,7 @@ const App = () => {
                                     x={40 + idx * 70}
                                     y={78}
                                     textAnchor="middle"
-                                    fontSize="11"
-                                    fill="#fff"
+                                    className="volume-bar-label"
                                   >
                                     {bar.date?.slice(5)}
                                   </text>
@@ -443,12 +437,7 @@ const App = () => {
                               );
                             })}
                           </svg>
-                          <div style={{
-                            textAlign: 'center',
-                            marginTop: '0.5rem',
-                            fontWeight: 500,
-                            color: signalColor
-                          }}>
+                          <div className={`volume-bar-signal ${signalClass}`}>
                             {signal}
                           </div>
                         </div>

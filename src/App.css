@@ -383,6 +383,47 @@ body {
   text-align: center;
 }
 
+.volume-bar-title {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.volume-bar-signal {
+  text-align: center;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.volume-bar-signal.bullish {
+  color: #22c55e;
+}
+.volume-bar-signal.bearish {
+  color: #ef4444;
+}
+.volume-bar-signal.neutral {
+  color: #fde047;
+}
+
+.volume-bar-label {
+  font-size: 11px;
+  fill: #fff;
+}
+
+.volume-bar-value {
+  font-size: 12px;
+  fill: #d1d5db;
+}
+
+.volume-bar-rect.bullish {
+  fill: #22c55e;
+}
+.volume-bar-rect.bearish {
+  fill: #ef4444;
+}
+.volume-bar-rect.neutral {
+  fill: #fde047;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
