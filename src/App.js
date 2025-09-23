@@ -383,10 +383,18 @@ const App = () => {
                       // Find max for scaling
                       const maxValue = Math.max(...bars.map(b => b.value || 0)) || 1;
 
-                      // Determine bullish/bearish from most recent value
+                      // Compare most recent and previous value
                       const latest = bars[bars.length - 1]?.value;
-                      const signal = latest > 3 ? 'Bearish' : 'Bullish';
-                      const signalColor = latest > 3 ? '#ef4444' : '#22c55e';
+                      const previous = bars[bars.length - 2]?.value;
+                      let signal = 'Neutral';
+                      let signalColor = '#d1d5db';
+                      if (latest > previous) {
+                        signal = 'Bearish';
+                        signalColor = '#ef4444';
+                      } else if (latest < previous) {
+                        signal = 'Bullish';
+                        signalColor = '#22c55e';
+                      }
 
                       return (
                         <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
