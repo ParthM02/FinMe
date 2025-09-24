@@ -90,6 +90,48 @@ const App = () => {
     }
   };
 
+  // Consolidated fetch for stockdata (used by all tabs except Options)
+  useEffect(() => {
+    const fetchStockData = async () => {
+      if (!searchTicker) return;
+      // Only fetch if not on Options tab
+      if (activeTab !== 'Options') {
+        try {
+          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
+          const data = await response.json();
+
+          // Distribute data to relevant states
+          if (activeTab === 'Technical') {
+            setVwap(data.vwap);
+            setClose(data.close);
+          }
+          if (activeTab === 'Sentiment') {
+            setHeadlines(data.headlines || []);
+            setInstitutionalSummary(data.institutionalSummary || null);
+          }
+          if (activeTab === 'Fundamental') {
+            setShortInterest(data.shortInterest || []);
+          }
+        } catch (error) {
+          // Reset states on error
+          if (activeTab === 'Technical') {
+            setVwap(null);
+            setClose(null);
+          }
+          if (activeTab === 'Sentiment') {
+            setHeadlines([]);
+            setInstitutionalSummary(null);
+          }
+          if (activeTab === 'Fundamental') {
+            setShortInterest([]);
+          }
+        }
+      }
+    };
+    fetchStockData();
+  }, [activeTab, searchTicker]);
+
+  // Keep Options fetch logic separate
   useEffect(() => {
     const fetchOptionData = async () => {
       if (activeTab === 'Options' && searchTicker) {
@@ -109,7 +151,6 @@ const App = () => {
           let putVolume = 0;
           let callVolume = 0;
           rows.forEach(row => {
-            // Only count rows with numeric volumes
             if (row.c_Volume && !isNaN(row.c_Volume) && row.c_Volume !== '--') {
               callVolume += Number(row.c_Volume);
             }
@@ -130,55 +171,6 @@ const App = () => {
     };
     fetchOptionData();
   }, [activeTab, searchTicker, useTestData]);
-
-  useEffect(() => {
-    const fetchTechnicalData = async () => {
-      if (activeTab === 'Technical' && searchTicker) {
-        try {
-          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
-          const data = await response.json();
-          setVwap(data.vwap);
-          setClose(data.close);
-        } catch (error) {
-          setVwap(null);
-          setClose(null);
-        }
-      }
-    };
-    fetchTechnicalData();
-  }, [activeTab, searchTicker]);
-
-  useEffect(() => {
-    const fetchSentimentData = async () => {
-      if (activeTab === 'Sentiment' && searchTicker) {
-        try {
-          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
-          const data = await response.json();
-          setHeadlines(data.headlines || []);
-          setInstitutionalSummary(data.institutionalSummary || null);
-        } catch (error) {
-          setHeadlines([]);
-          setInstitutionalSummary(null);
-        }
-      }
-    };
-    fetchSentimentData();
-  }, [activeTab, searchTicker]);
-
-  useEffect(() => {
-    const fetchFundamentalData = async () => {
-      if (activeTab === 'Fundamental' && searchTicker) {
-        try {
-          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
-          const data = await response.json();
-          setShortInterest(data.shortInterest || []);
-        } catch (error) {
-          setShortInterest([]);
-        }
-      }
-    };
-    fetchFundamentalData();
-  }, [activeTab, searchTicker]);
 
   // Add this helper for formatting date
   const formatDate = (utcString) => {
@@ -480,95 +472,4 @@ const App = () => {
                         }
 
                         const barClasses = bars.map((bar) => {
-                          if (bar.value > bar.prevValue) return 'bearish';
-                          if (bar.value < bar.prevValue) return 'bullish';
-                          return 'neutral';
-                        });
-
-                        return (
-                          <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
-                            <svg width="100%" height="80" viewBox="0 0 320 80">
-                              {bars.map((bar, idx) => {
-                                const height = Math.max(10, (bar.value / maxValue) * 60);
-                                return (
-                                  <g key={idx}>
-                                    <rect
-                                      x={20 + idx * 70}
-                                      y={80 - height}
-                                      width={40}
-                                      height={height}
-                                      rx={8}
-                                      className={`volume-bar-rect ${barClasses[idx]}`}
-                                    />
-                                    <text
-                                      x={40 + idx * 70}
-                                      y={80 - height - 8}
-                                      textAnchor="middle"
-                                      className="volume-bar-value"
-                                    >
-                                      {bar.value?.toFixed(2) ?? 'N/A'}
-                                    </text>
-                                    <text
-                                      x={40 + idx * 70}
-                                      y={78}
-                                      textAnchor="middle"
-                                      className="volume-bar-label"
-                                    >
-                                      {bar.date?.slice(5)}
-                                    </text>
-                                  </g>
-                                );
-                              })}
-                            </svg>
-                            <div className={`volume-bar-signal ${signalClass}`}>
-                              {signal}
-                            </div>
-                          </div>
-                        );
-                      })()
-                    )}
-                  </div>
-                  {/* Short Squeeze Potential Widget */}
-                  <div className="short-squeeze-widget">
-                    <div className="short-squeeze-title">Short Squeeze Potential</div>
-                    {shortInterest.length < 1 ? (
-                      <span>Loading...</span>
-                    ) : (
-                      (() => {
-                        // Most recent DTC (days to cover)
-                        const dtc = shortInterest[0]?.days_to_cover;
-                        let squeeze = 'Low';
-                        let squeezeClass = 'short-squeeze-low';
-                        if (dtc >= 8) {
-                          squeeze = 'High';
-                          squeezeClass = 'short-squeeze-high';
-                        } else if (dtc >= 3) {
-                          squeeze = 'Moderate';
-                          squeezeClass = 'short-squeeze-moderate';
-                        }
-                        return (
-                          <>
-                            <div className={`short-squeeze-value ${squeezeClass}`}>
-                              {dtc?.toFixed(2) ?? 'N/A'}
-                            </div>
-                            <div className={`short-squeeze-title ${squeezeClass}`}>
-                              {squeeze}
-                            </div>
-                          </>
-                        );
-                      })()
-                    )}
-                  </div>
-                </>
-              ) : (
-                `${activeTab} report breakdown will appear here.`
-              )}
-            </p>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-};
-
-export default App;
+                          if
