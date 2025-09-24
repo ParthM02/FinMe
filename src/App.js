@@ -90,87 +90,68 @@ const App = () => {
     }
   };
 
-  // Consolidated fetch for stockdata (used by all tabs except Options)
+  // Consolidated fetch: only fetches when a new ticker is submitted
   useEffect(() => {
     const fetchStockData = async () => {
       if (!searchTicker) return;
-      // Only fetch if not on Options tab
-      if (activeTab !== 'Options') {
-        try {
-          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
-          const data = await response.json();
-
-          // Distribute data to relevant states
-          if (activeTab === 'Technical') {
-            setVwap(data.vwap);
-            setClose(data.close);
-          }
-          if (activeTab === 'Sentiment') {
-            setHeadlines(data.headlines || []);
-            setInstitutionalSummary(data.institutionalSummary || null);
-          }
-          if (activeTab === 'Fundamental') {
-            setShortInterest(data.shortInterest || []);
-          }
-        } catch (error) {
-          // Reset states on error
-          if (activeTab === 'Technical') {
-            setVwap(null);
-            setClose(null);
-          }
-          if (activeTab === 'Sentiment') {
-            setHeadlines([]);
-            setInstitutionalSummary(null);
-          }
-          if (activeTab === 'Fundamental') {
-            setShortInterest([]);
-          }
-        }
+      try {
+        const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
+        const data = await response.json();
+        setVwap(data.vwap ?? null);
+        setClose(data.close ?? null);
+        setHeadlines(data.headlines || []);
+        setInstitutionalSummary(data.institutionalSummary || null);
+        setShortInterest(data.shortInterest || []);
+      } catch (error) {
+        setVwap(null);
+        setClose(null);
+        setHeadlines([]);
+        setInstitutionalSummary(null);
+        setShortInterest([]);
       }
     };
     fetchStockData();
-  }, [activeTab, searchTicker]);
+  }, [searchTicker]);
 
-  // Keep Options fetch logic separate
+  // Options fetch remains separate, but only triggers on ticker submit
   useEffect(() => {
     const fetchOptionData = async () => {
-      if (activeTab === 'Options' && searchTicker) {
-        try {
-          let data;
-          if (useTestData) {
-            const response = await fetch('/testdata.json');
-            data = await response.json();
-          } else {
-            const response = await fetch(`/api/optiondata?symbol=${searchTicker}`);
-            data = await response.json();
-          }
-          setOptionData(data);
+      if (!searchTicker) return;
+      try {
+        let data;
+        if (useTestData) {
+          const response = await fetch('/testdata.json');
+          data = await response.json();
+        } else {
+          const response = await fetch(`/api/optiondata?symbol=${searchTicker}`);
+          data = await response.json();
+        }
+        setOptionData(data);
 
-          // Correct parsing for put/call ratio
-          const rows = data?.data?.table?.rows || [];
-          let putVolume = 0;
-          let callVolume = 0;
-          rows.forEach(row => {
-            if (row.c_Volume && !isNaN(row.c_Volume) && row.c_Volume !== '--') {
-              callVolume += Number(row.c_Volume);
-            }
-            if (row.p_Volume && !isNaN(row.p_Volume) && row.p_Volume !== '--') {
-              putVolume += Number(row.p_Volume);
-            }
-          });
-          if (callVolume > 0) {
-            setPutCallRatio((putVolume / callVolume).toFixed(2));
-          } else {
-            setPutCallRatio(null);
+        // Correct parsing for put/call ratio
+        const rows = data?.data?.table?.rows || [];
+        let putVolume = 0;
+        let callVolume = 0;
+        rows.forEach(row => {
+          if (row.c_Volume && !isNaN(row.c_Volume) && row.c_Volume !== '--') {
+            callVolume += Number(row.c_Volume);
           }
-        } catch (error) {
-          setOptionData(null);
+          if (row.p_Volume && !isNaN(row.p_Volume) && row.p_Volume !== '--') {
+            putVolume += Number(row.p_Volume);
+          }
+        });
+        if (callVolume > 0) {
+          setPutCallRatio((putVolume / callVolume).toFixed(2));
+        } else {
           setPutCallRatio(null);
         }
+      } catch (error) {
+        setOptionData(null);
+        setPutCallRatio(null);
       }
     };
     fetchOptionData();
-  }, [activeTab, searchTicker, useTestData]);
+  }, [searchTicker, useTestData]);
 
   // Add this helper for formatting date
   const formatDate = (utcString) => {
@@ -472,39 +453,89 @@ const App = () => {
                         }
 
                         const barClasses = bars.map((bar) => {
-                          if (bar.value === null || bar.value === undefined) {
-                            return 'invisible-bar';
-                          }
-                          const fillHeight = (bar.value / maxValue) * 100;
-                          return `bar ${fillHeight > 0 ? (fillHeight > 50 ? 'green-bar' : 'yellow-bar') : 'red-bar'}`;
+                          if (bar.value > bar.prevValue) return 'bearish';
+                          if (bar.value < bar.prevValue) return 'bullish';
+                          return 'neutral';
                         });
 
                         return (
-                          <div className="volume-bars_container">
-                            {bars.map((bar, idx) => (
-                              <div
-                                key={idx}
-                                className={barClasses[idx]}
-                                style={{
-                                  height: bar.value !== null && bar.value !== undefined ? `${(bar.value / maxValue) * 100}%` : '0%',
-                                  transition: 'height 0.3s ease',
-                                  position: 'relative'
-                                }}
-                              >
-                                {bar.value !== null && bar.value !== undefined && (
-                                  <div className="bar-value" style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
-                                    {bar.value}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                          <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
+                            <svg width="100%" height="80" viewBox="0 0 320 80">
+                              {bars.map((bar, idx) => {
+                                const height = Math.max(10, (bar.value / maxValue) * 60);
+                                return (
+                                  <g key={idx}>
+                                    <rect
+                                      x={20 + idx * 70}
+                                      y={80 - height}
+                                      width={40}
+                                      height={height}
+                                      rx={8}
+                                      className={`volume-bar-rect ${barClasses[idx]}`}
+                                    />
+                                    <text
+                                      x={40 + idx * 70}
+                                      y={80 - height - 8}
+                                      textAnchor="middle"
+                                      className="volume-bar-value"
+                                    >
+                                      {bar.value?.toFixed(2) ?? 'N/A'}
+                                    </text>
+                                    <text
+                                      x={40 + idx * 70}
+                                      y={78}
+                                      textAnchor="middle"
+                                      className="volume-bar-label"
+                                    >
+                                      {bar.date?.slice(5)}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </svg>
+                            <div className={`volume-bar-signal ${signalClass}`}>
+                              {signal}
+                            </div>
                           </div>
                         );
                       })()
                     )}
                   </div>
+                  {/* Short Squeeze Potential Widget */}
+                  <div className="short-squeeze-widget">
+                    <div className="short-squeeze-title">Short Squeeze Potential</div>
+                    {shortInterest.length < 1 ? (
+                      <span>Loading...</span>
+                    ) : (
+                      (() => {
+                        // Most recent DTC (days to cover)
+                        const dtc = shortInterest[0]?.days_to_cover;
+                        let squeeze = 'Low';
+                        let squeezeClass = 'short-squeeze-low';
+                        if (dtc >= 8) {
+                          squeeze = 'High';
+                          squeezeClass = 'short-squeeze-high';
+                        } else if (dtc >= 3) {
+                          squeeze = 'Moderate';
+                          squeezeClass = 'short-squeeze-moderate';
+                        }
+                        return (
+                          <>
+                            <div className={`short-squeeze-value ${squeezeClass}`}>
+                              {dtc?.toFixed(2) ?? 'N/A'}
+                            </div>
+                            <div className={`short-squeeze-title ${squeezeClass}`}>
+                              {squeeze}
+                            </div>
+                          </>
+                        );
+                      })()
+                    )}
+                  </div>
                 </>
-              ) : null}
+              ) : (
+                `${activeTab} report breakdown will appear here.`
+              )}
             </p>
           </div>
         </div>
