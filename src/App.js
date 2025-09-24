@@ -13,6 +13,11 @@ const App = () => {
   const [optionData, setOptionData] = useState(null);
   const [putCallRatio, setPutCallRatio] = useState(null);
   const [useTestData, setUseTestData] = useState(false);
+
+  // Consolidated state for stockdata API
+  const [stockData, setStockData] = useState(null);
+
+  // Derived states
   const [vwap, setVwap] = useState(null);
   const [close, setClose] = useState(null);
   const [headlines, setHeadlines] = useState([]);
@@ -22,14 +27,13 @@ const App = () => {
   const [rsiUptrend, setRsiUptrend] = useState(null);
   const [rsiCrossover, setRsiCrossover] = useState(null);
   const [rsiObOs, setRsiObOs] = useState(null);
-  const widgetRef = useRef(null);
-  const chartRef = useRef(null); // Add this line
 
+  const widgetRef = useRef(null);
+  const chartRef = useRef(null);
+
+  // TradingView widgets
   useEffect(() => {
-    // Symbol Info Widget
-    if (widgetRef.current) {
-      widgetRef.current.innerHTML = '';
-    }
+    if (widgetRef.current) widgetRef.current.innerHTML = '';
     if (searchTicker) {
       const script = document.createElement('script');
       script.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js";
@@ -47,10 +51,7 @@ const App = () => {
   }, [searchTicker]);
 
   useEffect(() => {
-    // Symbol Overview Chart Widget
-    if (chartRef.current) {
-      chartRef.current.innerHTML = '';
-    }
+    if (chartRef.current) chartRef.current.innerHTML = '';
     if (searchTicker) {
       const script = document.createElement('script');
       script.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js";
@@ -62,7 +63,7 @@ const App = () => {
         ],
         "chartOnly": false,
         "width": "100%",
-        "height": "384", // 24rem = 384px
+        "height": "384",
         "locale": "en",
         "colorTheme": "dark",
         "isTransparent": true,
@@ -86,19 +87,51 @@ const App = () => {
     }
   }, [searchTicker]);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!ticker) return;
-    setSearchTicker(ticker); // Only update searchTicker on submit
-    try {
-      const response = await fetch(`/api/stockdata?ticker=${ticker}`);
-      const data = await response.json();
-      console.log('Polygon.io data:', data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
+  // Consolidated fetch for /api/stockdata
+  useEffect(() => {
+    const fetchStockData = async () => {
+      if (searchTicker) {
+        try {
+          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
+          const data = await response.json();
+          setStockData(data);
 
+          // Set derived states
+          setVwap(data.vwap ?? null);
+          setClose(data.close ?? null);
+          setHeadlines(data.headlines || []);
+          setShortInterest(data.shortInterest || []);
+          setInstitutionalSummary(data.institutionalSummary || null);
+          setRsiValues(data.rsiValues || []);
+
+          // RSI signals
+          if (data.rsiValues && data.rsiValues.length >= 2) {
+            setRsiUptrend(isUptrendByRSI(data.rsiValues));
+            setRsiCrossover(rsiCrossoverSignal(data.rsiValues));
+            setRsiObOs(rsiOverboughtOversoldSignal(data.rsiValues));
+          } else {
+            setRsiUptrend(null);
+            setRsiCrossover(null);
+            setRsiObOs(null);
+          }
+        } catch (error) {
+          setStockData(null);
+          setVwap(null);
+          setClose(null);
+          setHeadlines([]);
+          setShortInterest([]);
+          setInstitutionalSummary(null);
+          setRsiValues([]);
+          setRsiUptrend(null);
+          setRsiCrossover(null);
+          setRsiObOs(null);
+        }
+      }
+    };
+    fetchStockData();
+  }, [searchTicker]);
+
+  // Option data fetch (separate API)
   useEffect(() => {
     const fetchOptionData = async () => {
       if (activeTab === 'Options' && searchTicker) {
@@ -118,7 +151,6 @@ const App = () => {
           let putVolume = 0;
           let callVolume = 0;
           rows.forEach(row => {
-            // Only count rows with numeric volumes
             if (row.c_Volume && !isNaN(row.c_Volume) && row.c_Volume !== '--') {
               callVolume += Number(row.c_Volume);
             }
@@ -139,70 +171,6 @@ const App = () => {
     };
     fetchOptionData();
   }, [activeTab, searchTicker, useTestData]);
-
-  useEffect(() => {
-    const fetchTechnicalData = async () => {
-      if (activeTab === 'Technical' && searchTicker) {
-        try {
-          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
-          const data = await response.json();
-          setVwap(data.vwap);
-          setClose(data.close);
-          setRsiValues(data.rsiValues || []);
-          // Calculate signals if RSI data is available
-          if (data.rsiValues && data.rsiValues.length >= 2) {
-            setRsiUptrend(isUptrendByRSI(data.rsiValues));
-            setRsiCrossover(rsiCrossoverSignal(data.rsiValues));
-            setRsiObOs(rsiOverboughtOversoldSignal(data.rsiValues));
-          } else {
-            setRsiUptrend(null);
-            setRsiCrossover(null);
-            setRsiObOs(null);
-          }
-        } catch (error) {
-          setVwap(null);
-          setClose(null);
-          setRsiValues([]);
-          setRsiUptrend(null);
-          setRsiCrossover(null);
-          setRsiObOs(null);
-        }
-      }
-    };
-    fetchTechnicalData();
-  }, [activeTab, searchTicker]);
-
-  useEffect(() => {
-    const fetchSentimentData = async () => {
-      if (activeTab === 'Sentiment' && searchTicker) {
-        try {
-          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
-          const data = await response.json();
-          setHeadlines(data.headlines || []);
-          setInstitutionalSummary(data.institutionalSummary || null);
-        } catch (error) {
-          setHeadlines([]);
-          setInstitutionalSummary(null);
-        }
-      }
-    };
-    fetchSentimentData();
-  }, [activeTab, searchTicker]);
-
-  useEffect(() => {
-    const fetchFundamentalData = async () => {
-      if (activeTab === 'Fundamental' && searchTicker) {
-        try {
-          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
-          const data = await response.json();
-          setShortInterest(data.shortInterest || []);
-        } catch (error) {
-          setShortInterest([]);
-        }
-      }
-    };
-    fetchFundamentalData();
-  }, [activeTab, searchTicker]);
 
   // Add this helper for formatting date
   const formatDate = (utcString) => {
@@ -261,26 +229,29 @@ const App = () => {
     );
   };
 
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!ticker) return;
+    setSearchTicker(ticker);
+  };
+
   return (
     <div className="app-container">
       {/* Header */}
       <header className="app-header">
         <div className="header-content">
           <div className="logo">FinMe</div>
-          
           <div className="header-actions">
             <button className="upgrade-button">
               <span>✨</span>
               <span>Upgrade</span>
               <span>✨</span>
             </button>
-            
             <nav className="navigation">
               <button className="nav-button">Home</button>
               <button className="nav-button">Analysis</button>
               <button className="nav-button">Guide</button>
             </nav>
-            
             <div className="user-icon">
               <svg xmlns="http://www.w3.org/2000/svg" className="icon" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -326,7 +297,6 @@ const App = () => {
               <div className="card-content">
                 <h3 className="card-subtitle">Score</h3>
                 <h2 className="card-rating">Rating</h2>
-                
                 <div className="tabs-container">
                   <div className="tabs">
                     {['Fundamental', 'Technical', 'Options', 'Sentiment'].map((tab) => (
@@ -392,7 +362,6 @@ const App = () => {
                   <span>Loading VWAP...</span>
                 )
               ) : activeTab === 'Options' ? (
-                // ...existing options code...
                 putCallRatio !== null ? (
                   <div className="put-call-widget">
                     <div className="put-call-title">Put/Call Ratio</div>
@@ -411,12 +380,10 @@ const App = () => {
                   <span>Loading put/call ratio...</span>
                 )
               ) : activeTab === 'Sentiment' ? (
-                // ...existing sentiment code...
                 <div className="sentiment-widget">
                   {/* ... */}
                 </div>
               ) : activeTab === 'Fundamental' ? (
-                // ...existing fundamental code...
                 <>
                   {/* ... */}
                 </>
