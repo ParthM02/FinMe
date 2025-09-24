@@ -314,7 +314,7 @@ const App = () => {
                             const uptrend = isUptrendByRSI(rsiValues);
                             return (
                               <div className={`rsi-value ${uptrend ? 'bullish' : 'bearish'}`}>
-                                {uptrend ? 'Uptrend' : 'Downtrend'}
+                                {uptrend ? 'Bullish' : 'Bearish'}
                               </div>
                             );
                           })()
@@ -329,8 +329,8 @@ const App = () => {
                           (() => {
                             const signal = rsiCrossoverSignal(rsiValues);
                             let label = 'Neutral', signalClass = 'neutral';
-                            if (signal === 1) { label = 'Bullish Crossover'; signalClass = 'bullish'; }
-                            else if (signal === -1) { label = 'Bearish Crossover'; signalClass = 'bearish'; }
+                            if (signal === 1) { label = 'Bullish'; signalClass = 'bullish'; }
+                            else if (signal === -1) { label = 'Bearish'; signalClass = 'bearish'; }
                             return (
                               <div className={`rsi-value ${signalClass}`}>{label}</div>
                             );
@@ -341,13 +341,13 @@ const App = () => {
                       </div>
                       {/* 3. RSI Overbought/Oversold Widget */}
                       <div className="rsi-widget">
-                        <div className="rsi-title">RSI Level</div>
+                        <div className="rsi-title">Recent RSI Level</div>
                         {rsiValues.length >= 1 ? (
                           (() => {
                             const signal = rsiOverboughtOversoldSignal(rsiValues);
                             let label = 'Neutral', signalClass = 'neutral';
-                            if (signal === 1) { label = 'Oversold'; signalClass = 'bullish'; }
-                            else if (signal === -1) { label = 'Overbought'; signalClass = 'bearish'; }
+                            if (signal === 1) { label = 'Bullish'; signalClass = 'bullish'; }
+                            else if (signal === -1) { label = 'Bearish'; signalClass = 'bearish'; }
                             return (
                               <div className={`rsi-value ${signalClass}`}>{label} <span style={{fontSize: '0.9em', color: '#9ca3af'}}>({rsiValues[rsiValues.length-1]?.toFixed(2)})</span></div>
                             );
