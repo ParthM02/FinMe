@@ -24,8 +24,8 @@ export function rsiCrossoverSignal(rsiArray) {
     if (!Array.isArray(rsiArray) || rsiArray.length < 2) {
         throw new Error("Input must be an array of at least 2 RSI values.");
     }
-    const prev = rsiArray[rsiArray.length - 2];
-    const curr = rsiArray[rsiArray.length - 1];
+    const prev = rsiArray.reverse()[rsiArray.length - 2];
+    const curr = rsiArray.reverse()[rsiArray.length - 1];
 
     // Bullish crossover: crosses above 30
     if (prev <= 30 && curr > 30) return 1;
@@ -48,7 +48,7 @@ export function rsiOverboughtOversoldSignal(rsiArray) {
     if (!Array.isArray(rsiArray) || rsiArray.length < 1) {
         throw new Error("Input must be an array of at least 1 RSI value.");
     }
-    const curr = rsiArray[rsiArray.length - 1];
+    const curr = rsiArray.reverse()[rsiArray.length - 1];
 
     if (curr > 70) return -1; // Overbought
     if (curr < 30) return 1;  // Oversold
