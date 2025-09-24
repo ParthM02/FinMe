@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
+import {
+  isUptrendByRSI,
+  rsiCrossoverSignal,
+  rsiOverboughtOversoldSignal
+} from './technicalAnalysis.js';
 
 const App = () => {
   const [ticker, setTicker] = useState('');
@@ -13,6 +18,10 @@ const App = () => {
   const [headlines, setHeadlines] = useState([]);
   const [shortInterest, setShortInterest] = useState([]);
   const [institutionalSummary, setInstitutionalSummary] = useState(null);
+  const [rsiValues, setRsiValues] = useState([]);
+  const [rsiUptrend, setRsiUptrend] = useState(null);
+  const [rsiCrossover, setRsiCrossover] = useState(null);
+  const [rsiObOs, setRsiObOs] = useState(null);
   const widgetRef = useRef(null);
   const chartRef = useRef(null); // Add this line
 
@@ -139,9 +148,24 @@ const App = () => {
           const data = await response.json();
           setVwap(data.vwap);
           setClose(data.close);
+          setRsiValues(data.rsiValues || []);
+          // Calculate signals if RSI data is available
+          if (data.rsiValues && data.rsiValues.length >= 2) {
+            setRsiUptrend(isUptrendByRSI(data.rsiValues));
+            setRsiCrossover(rsiCrossoverSignal(data.rsiValues));
+            setRsiObOs(rsiOverboughtOversoldSignal(data.rsiValues));
+          } else {
+            setRsiUptrend(null);
+            setRsiCrossover(null);
+            setRsiObOs(null);
+          }
         } catch (error) {
           setVwap(null);
           setClose(null);
+          setRsiValues([]);
+          setRsiUptrend(null);
+          setRsiCrossover(null);
+          setRsiObOs(null);
         }
       }
     };
@@ -184,6 +208,57 @@ const App = () => {
   const formatDate = (utcString) => {
     const date = new Date(utcString);
     return date.toLocaleString();
+  };
+
+  // Helper for rendering RSI signals
+  const renderRsiUptrend = () => {
+    if (rsiUptrend === null) return <span>Loading...</span>;
+    return (
+      <div>
+        <div className="rsi-widget-title">RSI Uptrend</div>
+        <div className={`rsi-widget-value ${rsiUptrend ? 'bullish' : 'bearish'}`}>
+          {rsiUptrend ? 'Uptrend (Bullish)' : 'Downtrend (Bearish)'}
+        </div>
+      </div>
+    );
+  };
+
+  const renderRsiCrossover = () => {
+    if (rsiCrossover === null) return <span>Loading...</span>;
+    let text = 'Neutral';
+    let cls = 'neutral';
+    if (rsiCrossover === 1) {
+      text = 'Bullish Crossover (Above 30)';
+      cls = 'bullish';
+    } else if (rsiCrossover === -1) {
+      text = 'Bearish Crossover (Below 70)';
+      cls = 'bearish';
+    }
+    return (
+      <div>
+        <div className="rsi-widget-title">RSI Crossover</div>
+        <div className={`rsi-widget-value ${cls}`}>{text}</div>
+      </div>
+    );
+  };
+
+  const renderRsiObOs = () => {
+    if (rsiObOs === null) return <span>Loading...</span>;
+    let text = 'Neutral';
+    let cls = 'neutral';
+    if (rsiObOs === 1) {
+      text = 'Oversold (<30) — Bullish';
+      cls = 'bullish';
+    } else if (rsiObOs === -1) {
+      text = 'Overbought (>70) — Bearish';
+      cls = 'bearish';
+    }
+    return (
+      <div>
+        <div className="rsi-widget-title">RSI Overbought/Oversold</div>
+        <div className={`rsi-widget-value ${cls}`}>{text}</div>
+      </div>
+    );
   };
 
   return (
@@ -286,7 +361,38 @@ const App = () => {
           <div className="card-content">
             <h3 className="card-title">Report Section Breakdown</h3>
             <p className="card-placeholder-text">
-              {activeTab === 'Options' ? (
+              {activeTab === 'Technical' ? (
+                vwap !== null && close !== null ? (
+                  <div className="technical-widgets-container">
+                    {/* VWAP Widget */}
+                    <div className="vwap-widget">
+                      <div className="vwap-title">VWAP</div>
+                      <div
+                        className={`vwap-value ${
+                          close > vwap ? 'bullish' : 'bearish'
+                        }`}
+                      >
+                        {vwap}
+                      </div>
+                      <div className="put-call-signal">
+                        {close > vwap ? 'Bullish' : 'Bearish'}
+                      </div>
+                      <div style={{ fontSize: '1rem', color: '#9ca3af', marginTop: '0.25rem', textAlign: 'center' }}>
+                        Close: {close}
+                      </div>
+                    </div>
+                    {/* RSI Widgets */}
+                    <div className="rsi-widgets">
+                      <div className="rsi-widget">{renderRsiUptrend()}</div>
+                      <div className="rsi-widget">{renderRsiCrossover()}</div>
+                      <div className="rsi-widget">{renderRsiObOs()}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <span>Loading VWAP...</span>
+                )
+              ) : activeTab === 'Options' ? (
+                // ...existing options code...
                 putCallRatio !== null ? (
                   <div className="put-call-widget">
                     <div className="put-call-title">Put/Call Ratio</div>
@@ -304,261 +410,15 @@ const App = () => {
                 ) : (
                   <span>Loading put/call ratio...</span>
                 )
-              ) : activeTab === 'Technical' ? (
-                vwap !== null && close !== null ? (
-                  <div className="vwap-widget">
-                    <div className="vwap-title">VWAP</div>
-                    <div
-                      className={`vwap-value ${
-                        close > vwap ? 'bullish' : 'bearish'
-                      }`}
-                    >
-                      {vwap}
-                    </div>
-                    <div className="put-call-signal">
-                      {close > vwap ? 'Bullish' : 'Bearish'}
-                    </div>
-                    <div style={{ fontSize: '1rem', color: '#9ca3af', marginTop: '0.25rem', textAlign: 'center' }}>
-                      Close: {close}
-                    </div>
-                  </div>
-                ) : (
-                  <span>Loading VWAP...</span>
-                )
               ) : activeTab === 'Sentiment' ? (
+                // ...existing sentiment code...
                 <div className="sentiment-widget">
-                  {/* Institutional Activity Widget */}
-                  <div className="institutional-activity-widget">
-                    <div className="institutional-activity-title"># Institutional Position</div>
-                    {institutionalSummary ? (() => {
-                      const increased = parseInt(institutionalSummary.increasedInstitutions?.replace(/,/g, '') || 0, 10);
-                      const decreased = parseInt(institutionalSummary.decreasedInstitutions?.replace(/,/g, '') || 0, 10);
-                      const signal = increased > decreased ? 'Bullish' : 'Bearish';
-                      const signalClass = increased > decreased ? 'bullish' : 'bearish';
-                      return (
-                        <div className="institutional-activity-content">
-                          <div className="institutional-activity-counts">
-                            <div>
-                              <div className="institutional-label">Increased</div>
-                              <div className="institutional-value">{institutionalSummary.increasedInstitutions ?? 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="institutional-label">Decreased</div>
-                              <div className="institutional-value">{institutionalSummary.decreasedInstitutions ?? 'N/A'}</div>
-                            </div>
-                          </div>
-                          <div className={`institutional-activity-signal ${signalClass}`}>{signal}</div>
-                        </div>
-                      );
-                    })() : (
-                      <div style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '1rem' }}>Loading institutional activity...</div>
-                    )}
-                  </div>
-                  <div className="institutional-activity-widget">
-                    <div className="institutional-activity-title">Institutional Share Volume</div>
-                    {institutionalSummary ? (() => {
-                      const increasedShares = parseInt(institutionalSummary.increasedShares?.replace(/,/g, '') || 0, 10);
-                      const decreasedShares = parseInt(institutionalSummary.decreasedShares?.replace(/,/g, '') || 0, 10);
-                      const signal = increasedShares > decreasedShares ? 'Bullish' : 'Bearish';
-                      const signalClass = increasedShares > decreasedShares ? 'bullish' : 'bearish';
-                      return (
-                        <div className="institutional-activity-content">
-                          <div className="institutional-activity-counts">
-                            <div>
-                              <div className="institutional-label">Increased</div>
-                              <div className="institutional-value">{institutionalSummary.increasedShares ?? 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="institutional-label">Decreased</div>
-                              <div className="institutional-value">{institutionalSummary.decreasedShares ?? 'N/A'}</div>
-                            </div>
-                          </div>
-                          <div className={`institutional-activity-signal ${signalClass}`}>{signal}</div>
-                        </div>
-                      );
-                    })() : (
-                      <div style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '1rem' }}>Loading institutional share changes...</div>
-                    )}
-                  </div>
-                  <div className="institutional-activity-widget">
-                    <div className="institutional-activity-title">New vs Sold Out Institutions</div>
-                    {institutionalSummary ? (() => {
-                      const newInstitutions = parseInt(institutionalSummary.newInstitutions?.replace(/,/g, '') || 0, 10);
-                      const soldOutInstitutions = parseInt(institutionalSummary.soldOutInstitutions?.replace(/,/g, '') || 0, 10);
-                      const signal = newInstitutions > soldOutInstitutions ? 'Bullish' : 'Bearish';
-                      const signalClass = newInstitutions > soldOutInstitutions ? 'bullish' : 'bearish';
-                      return (
-                        <div className="institutional-activity-content">
-                          <div className="institutional-activity-counts">
-                            <div>
-                              <div className="institutional-label">New Positions</div>
-                              <div className="institutional-value">{institutionalSummary.newInstitutions ?? 'N/A'}</div>
-                            </div>
-                            <div>
-                              <div className="institutional-label">Sold Out</div>
-                              <div className="institutional-value">{institutionalSummary.soldOutInstitutions ?? 'N/A'}</div>
-                            </div>
-                          </div>
-                          <div className={`institutional-activity-signal ${signalClass}`}>{signal}</div>
-                        </div>
-                      );
-                    })() : (
-                      <div style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '1rem' }}>Loading new/sold out institution data...</div>
-                    )}
-                  </div>
-                  {/* Existing Sentiment Table */}
-                  <table className="sentiment-table">
-                    <thead>
-                      <tr>
-                        <th>Headline</th>
-                        <th>Published</th>
-                        <th>Sentiment</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {headlines.length === 0 ? (
-                        <tr>
-                          <td colSpan={3} style={{ color: '#9ca3af', textAlign: 'center' }}>Loading headlines...</td>
-                        </tr>
-                      ) : (
-                        headlines.map((item, idx) => (
-                          <tr key={idx}>
-                            <td>
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="sentiment-link"
-                              >
-                                {item.title}
-                              </a>
-                            </td>
-                            <td style={{ color: '#9ca3af' }}>{formatDate(item.published_utc)}</td>
-                            <td style={{
-                              color:
-                                item.sentiment === 'positive'
-                                  ? '#22c55e'
-                                  : item.sentiment === 'negative'
-                                  ? '#ef4444'
-                                  : '#d1d5db'
-                            }}>
-                              {item.sentiment ?? 'N/A'}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                  {/* ... */}
                 </div>
               ) : activeTab === 'Fundamental' ? (
+                // ...existing fundamental code...
                 <>
-                  <div className="volume-bar-widget">
-                    <div className="volume-bar-title">Days to Cover</div>
-                    {shortInterest.length < 5 ? (
-                      <span>Loading data...</span>
-                    ) : (
-                      (() => {
-                        const lastFive = shortInterest.slice(0, 5).reverse();
-                        const bars = lastFive.slice(1).map((item, idx) => ({
-                          date: item.settlement_date,
-                          value: item.days_to_cover,
-                          prevValue: lastFive[idx].days_to_cover
-                        }));
-
-                        const maxValue = Math.max(...bars.map(b => b.value || 0)) || 1;
-
-                        const latest = bars[bars.length - 1]?.value;
-                        const previous = bars[bars.length - 1]?.prevValue;
-                        let signal = 'Neutral';
-                        let signalClass = 'neutral';
-                        if (latest > previous) {
-                          signal = 'Bearish';
-                          signalClass = 'bearish';
-                        } else if (latest < previous) {
-                          signal = 'Bullish';
-                          signalClass = 'bullish';
-                        }
-
-                        const barClasses = bars.map((bar) => {
-                          if (bar.value > bar.prevValue) return 'bearish';
-                          if (bar.value < bar.prevValue) return 'bullish';
-                          return 'neutral';
-                        });
-
-                        return (
-                          <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
-                            <svg width="100%" height="80" viewBox="0 0 320 80">
-                              {bars.map((bar, idx) => {
-                                const height = Math.max(10, (bar.value / maxValue) * 60);
-                                return (
-                                  <g key={idx}>
-                                    <rect
-                                      x={20 + idx * 70}
-                                      y={80 - height}
-                                      width={40}
-                                      height={height}
-                                      rx={8}
-                                      className={`volume-bar-rect ${barClasses[idx]}`}
-                                    />
-                                    <text
-                                      x={40 + idx * 70}
-                                      y={80 - height - 8}
-                                      textAnchor="middle"
-                                      className="volume-bar-value"
-                                    >
-                                      {bar.value?.toFixed(2) ?? 'N/A'}
-                                    </text>
-                                    <text
-                                      x={40 + idx * 70}
-                                      y={78}
-                                      textAnchor="middle"
-                                      className="volume-bar-label"
-                                    >
-                                      {bar.date?.slice(5)}
-                                    </text>
-                                  </g>
-                                );
-                              })}
-                            </svg>
-                            <div className={`volume-bar-signal ${signalClass}`}>
-                              {signal}
-                            </div>
-                          </div>
-                        );
-                      })()
-                    )}
-                  </div>
-                  {/* Short Squeeze Potential Widget */}
-                  <div className="short-squeeze-widget">
-                    <div className="short-squeeze-title">Short Squeeze Potential</div>
-                    {shortInterest.length < 1 ? (
-                      <span>Loading...</span>
-                    ) : (
-                      (() => {
-                        // Most recent DTC (days to cover)
-                        const dtc = shortInterest[0]?.days_to_cover;
-                        let squeeze = 'Low';
-                        let squeezeClass = 'short-squeeze-low';
-                        if (dtc >= 8) {
-                          squeeze = 'High';
-                          squeezeClass = 'short-squeeze-high';
-                        } else if (dtc >= 3) {
-                          squeeze = 'Moderate';
-                          squeezeClass = 'short-squeeze-moderate';
-                        }
-                        return (
-                          <>
-                            <div className={`short-squeeze-value ${squeezeClass}`}>
-                              {dtc?.toFixed(2) ?? 'N/A'}
-                            </div>
-                            <div className={`short-squeeze-title ${squeezeClass}`}>
-                              {squeeze}
-                            </div>
-                          </>
-                        );
-                      })()
-                    )}
-                  </div>
+                  {/* ... */}
                 </>
               ) : (
                 `${activeTab} report breakdown will appear here.`

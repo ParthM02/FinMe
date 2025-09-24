@@ -20,6 +20,11 @@ export default async function handler(req, res) {
     const vwap = previousClose?.results?.[0]?.vw ?? null;
     const close = previousClose?.results?.[0]?.c ?? null;
 
+    // Fetch RSI data (last 10 days)
+    const rsiUrl = `https://api.polygon.io/v1/indicators/rsi/${ticker.toUpperCase()}?timespan=day&adjusted=true&window=14&series_type=close&order=desc&limit=10&apiKey=${POLYGON_API_KEY}`;
+    const rsiData = await getJSON(rsiUrl);
+    const rsiValues = rsiData?.results?.values?.map(val => val.value) ?? [];
+
     // Fetch recent news headlines with sentiment
     const newsUrl = `https://api.polygon.io/v2/reference/news?ticker=${ticker.toUpperCase()}&order=desc&limit=10&sort=published_utc&apiKey=${POLYGON_API_KEY}`;
     const newsData = await getJSON(newsUrl);
@@ -75,6 +80,7 @@ export default async function handler(req, res) {
       previousClose,
       vwap,
       close,
+      rsiValues,
       headlines,
       shortInterest,
       institutionalSummary
