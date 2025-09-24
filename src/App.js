@@ -329,7 +329,7 @@ const App = () => {
                 <div className="sentiment-widget">
                   {/* Institutional Activity Widget */}
                   <div className="institutional-activity-widget">
-                    <div className="institutional-activity-title">Institutional Position Changes</div>
+                    <div className="institutional-activity-title"># Institutional Position</div>
                     {institutionalSummary ? (() => {
                       const increased = parseInt(institutionalSummary.increasedInstitutions?.replace(/,/g, '') || 0, 10);
                       const decreased = parseInt(institutionalSummary.decreasedInstitutions?.replace(/,/g, '') || 0, 10);
@@ -355,7 +355,7 @@ const App = () => {
                     )}
                   </div>
                   <div className="institutional-activity-widget">
-                    <div className="institutional-activity-title">Institutional Share Changes</div>
+                    <div className="institutional-activity-title">Institutional Share Volume</div>
                     {institutionalSummary ? (() => {
                       const increasedShares = parseInt(institutionalSummary.increasedShares?.replace(/,/g, '') || 0, 10);
                       const decreasedShares = parseInt(institutionalSummary.decreasedShares?.replace(/,/g, '') || 0, 10);
@@ -378,6 +378,32 @@ const App = () => {
                       );
                     })() : (
                       <div style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '1rem' }}>Loading institutional share changes...</div>
+                    )}
+                  </div>
+                  <div className="institutional-activity-widget">
+                    <div className="institutional-activity-title">New vs Sold Out Institutions</div>
+                    {institutionalSummary ? (() => {
+                      const newInstitutions = parseInt(institutionalSummary.newInstitutions?.replace(/,/g, '') || 0, 10);
+                      const soldOutInstitutions = parseInt(institutionalSummary.soldOutInstitutions?.replace(/,/g, '') || 0, 10);
+                      const signal = newInstitutions > soldOutInstitutions ? 'Bullish' : 'Bearish';
+                      const signalClass = newInstitutions > soldOutInstitutions ? 'bullish' : 'bearish';
+                      return (
+                        <div className="institutional-activity-content">
+                          <div className="institutional-activity-counts">
+                            <div>
+                              <div className="institutional-label">New Positions</div>
+                              <div className="institutional-value">{institutionalSummary.newInstitutions ?? 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="institutional-label">Sold Out</div>
+                              <div className="institutional-value">{institutionalSummary.soldOutInstitutions ?? 'N/A'}</div>
+                            </div>
+                          </div>
+                          <div className={`institutional-activity-signal ${signalClass}`}>{signal}</div>
+                        </div>
+                      );
+                    })() : (
+                      <div style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '1rem' }}>Loading new/sold out institution data...</div>
                     )}
                   </div>
                   {/* Existing Sentiment Table */}
