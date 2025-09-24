@@ -514,6 +514,63 @@ body {
   color: #ef4444;
 }
 
+/* --- RSI Widgets --- */
+.rsi-widgets {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.rsi-widget {
+  background: #111;
+  border-radius: 1.5rem;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  min-width: 160px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+}
+
+.rsi-title {
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.rsi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.rsi-value.bullish {
+  color: #22c55e; /* green-500 */
+}
+
+.rsi-value.bearish {
+  color: #ef4444; /* red-500 */
+}
+
+.rsi-value.neutral {
+  color: #fde047; /* yellow-400 */
+}
+
+.rsi-loading {
+  color: #9ca3af;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
