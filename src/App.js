@@ -329,7 +329,7 @@ const App = () => {
                 <div className="sentiment-widget">
                   {/* Institutional Activity Widget */}
                   <div className="institutional-activity-widget">
-                    <div className="institutional-activity-title">Institutional Activity</div>
+                    <div className="institutional-activity-title">Institutional Position Changes</div>
                     {institutionalSummary ? (() => {
                       const increased = parseInt(institutionalSummary.increasedInstitutions?.replace(/,/g, '') || 0, 10);
                       const decreased = parseInt(institutionalSummary.decreasedInstitutions?.replace(/,/g, '') || 0, 10);
@@ -352,6 +352,32 @@ const App = () => {
                       );
                     })() : (
                       <div style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '1rem' }}>Loading institutional activity...</div>
+                    )}
+                  </div>
+                  <div className="institutional-activity-widget">
+                    <div className="institutional-activity-title">Institutional Share Changes</div>
+                    {institutionalSummary ? (() => {
+                      const increasedShares = parseInt(institutionalSummary.increasedShares?.replace(/,/g, '') || 0, 10);
+                      const decreasedShares = parseInt(institutionalSummary.decreasedShares?.replace(/,/g, '') || 0, 10);
+                      const signal = increasedShares > decreasedShares ? 'Bullish' : 'Bearish';
+                      const signalClass = increasedShares > decreasedShares ? 'bullish' : 'bearish';
+                      return (
+                        <div className="institutional-activity-content">
+                          <div className="institutional-activity-counts">
+                            <div>
+                              <div className="institutional-label">Increased</div>
+                              <div className="institutional-value">{institutionalSummary.increasedShares ?? 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="institutional-label">Decreased</div>
+                              <div className="institutional-value">{institutionalSummary.decreasedShares ?? 'N/A'}</div>
+                            </div>
+                          </div>
+                          <div className={`institutional-activity-signal ${signalClass}`}>{signal}</div>
+                        </div>
+                      );
+                    })() : (
+                      <div style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '1rem' }}>Loading institutional share changes...</div>
                     )}
                   </div>
                   {/* Existing Sentiment Table */}
