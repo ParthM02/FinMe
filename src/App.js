@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
+import {
+  isUptrendByRSI,
+  rsiCrossoverSignal,
+  rsiOverboughtOversoldSignal
+} from './technicalAnalysis';
 
 const App = () => {
   const [ticker, setTicker] = useState('');
@@ -13,6 +18,7 @@ const App = () => {
   const [headlines, setHeadlines] = useState([]);
   const [shortInterest, setShortInterest] = useState([]);
   const [institutionalSummary, setInstitutionalSummary] = useState(null);
+  const [rsiValues, setRsiValues] = useState([]);
   const widgetRef = useRef(null);
   const chartRef = useRef(null); // Add this line
 
@@ -102,12 +108,14 @@ const App = () => {
         setHeadlines(data.headlines || []);
         setInstitutionalSummary(data.institutionalSummary || null);
         setShortInterest(data.shortInterest || []);
+        setRsiValues(data.rsiValues || []); // <-- Add this line
       } catch (error) {
         setVwap(null);
         setClose(null);
         setHeadlines([]);
         setInstitutionalSummary(null);
         setShortInterest([]);
+        setRsiValues([]); // <-- Add this line
       }
     };
     fetchStockData();
@@ -279,21 +287,77 @@ const App = () => {
                 )
               ) : activeTab === 'Technical' ? (
                 vwap !== null && close !== null ? (
-                  <div className="vwap-widget">
-                    <div className="vwap-title">VWAP</div>
-                    <div
-                      className={`vwap-value ${
-                        close > vwap ? 'bullish' : 'bearish'
-                      }`}
-                    >
-                      {vwap}
+                  <div>
+                    <div className="vwap-widget">
+                      <div className="vwap-title">VWAP</div>
+                      <div
+                        className={`vwap-value ${
+                          close > vwap ? 'bullish' : 'bearish'
+                        }`}
+                      >
+                        {vwap}
+                      </div>
+                      <div className="put-call-signal">
+                        {close > vwap ? 'Bullish' : 'Bearish'}
+                      </div>
+                      <div style={{ fontSize: '1rem', color: '#9ca3af', marginTop: '0.25rem', textAlign: 'center' }}>
+                        Close: {close}
+                      </div>
                     </div>
-                    <div className="put-call-signal">
-                      {close > vwap ? 'Bullish' : 'Bearish'}
+                    {/* --- RSI Widgets --- */}
+                    <div className="rsi-widgets" style={{ display: 'flex', gap: '1.5rem', marginTop: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      {/* 1. RSI Uptrend/Downtrend Widget */}
+                      <div className="rsi-widget">
+                        <div className="rsi-title">RSI Trend</div>
+                        {rsiValues.length === 10 ? (
+                          (() => {
+                            const uptrend = isUptrendByRSI(rsiValues);
+                            return (
+                              <div className={`rsi-value ${uptrend ? 'bullish' : 'bearish'}`}>
+                                {uptrend ? 'Uptrend' : 'Downtrend'}
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <div className="rsi-loading">Loading...</div>
+                        )}
+                      </div>
+                      {/* 2. RSI Crossover Widget */}
+                      <div className="rsi-widget">
+                        <div className="rsi-title">RSI Crossover</div>
+                        {rsiValues.length >= 2 ? (
+                          (() => {
+                            const signal = rsiCrossoverSignal(rsiValues);
+                            let label = 'Neutral', signalClass = 'neutral';
+                            if (signal === 1) { label = 'Bullish Crossover'; signalClass = 'bullish'; }
+                            else if (signal === -1) { label = 'Bearish Crossover'; signalClass = 'bearish'; }
+                            return (
+                              <div className={`rsi-value ${signalClass}`}>{label}</div>
+                            );
+                          })()
+                        ) : (
+                          <div className="rsi-loading">Loading...</div>
+                        )}
+                      </div>
+                      {/* 3. RSI Overbought/Oversold Widget */}
+                      <div className="rsi-widget">
+                        <div className="rsi-title">RSI Level</div>
+                        {rsiValues.length >= 1 ? (
+                          (() => {
+                            const signal = rsiOverboughtOversoldSignal(rsiValues);
+                            let label = 'Neutral', signalClass = 'neutral';
+                            if (signal === 1) { label = 'Oversold'; signalClass = 'bullish'; }
+                            else if (signal === -1) { label = 'Overbought'; signalClass = 'bearish'; }
+                            return (
+                              <div className={`rsi-value ${signalClass}`}>{label} <span style={{fontSize: '0.9em', color: '#9ca3af'}}>({rsiValues[rsiValues.length-1]?.toFixed(2)})</span></div>
+                            );
+                          })()
+                        ) : (
+                          <div className="rsi-loading">Loading...</div>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ fontSize: '1rem', color: '#9ca3af', marginTop: '0.25rem', textAlign: 'center' }}>
-                      Close: {close}
-                    </div>
+                    {/* --- End RSI Widgets --- */}
                   </div>
                 ) : (
                   <span>Loading VWAP...</span>
