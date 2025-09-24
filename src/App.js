@@ -246,7 +246,7 @@ const App = () => {
               padding: '0.25rem 0.75rem',
               pointerEvents: 'none'
             }}>
-              {cooldown}s
+              API Cooldown: {cooldown}s
             </div>
           )}
         </form>
