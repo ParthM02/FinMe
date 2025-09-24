@@ -12,6 +12,7 @@ const App = () => {
   const [close, setClose] = useState(null);
   const [headlines, setHeadlines] = useState([]);
   const [shortInterest, setShortInterest] = useState([]);
+  const [institutionalSummary, setInstitutionalSummary] = useState(null);
   const widgetRef = useRef(null);
   const chartRef = useRef(null); // Add this line
 
@@ -154,8 +155,10 @@ const App = () => {
           const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
           const data = await response.json();
           setHeadlines(data.headlines || []);
+          setInstitutionalSummary(data.institutionalSummary || null);
         } catch (error) {
           setHeadlines([]);
+          setInstitutionalSummary(null);
         }
       }
     };
@@ -324,6 +327,34 @@ const App = () => {
                 )
               ) : activeTab === 'Sentiment' ? (
                 <div className="sentiment-widget">
+                  {/* Institutional Activity Widget */}
+                  <div className="institutional-activity-widget">
+                    <div className="institutional-activity-title">Institutional Activity</div>
+                    {institutionalSummary ? (() => {
+                      const increased = parseInt(institutionalSummary.increasedInstitutions?.replace(/,/g, '') || 0, 10);
+                      const decreased = parseInt(institutionalSummary.decreasedInstitutions?.replace(/,/g, '') || 0, 10);
+                      const signal = increased > decreased ? 'Bullish' : 'Bearish';
+                      const signalClass = increased > decreased ? 'bullish' : 'bearish';
+                      return (
+                        <div className="institutional-activity-content">
+                          <div className="institutional-activity-counts">
+                            <div>
+                              <div className="institutional-label">Increased</div>
+                              <div className="institutional-value">{institutionalSummary.increasedInstitutions ?? 'N/A'}</div>
+                            </div>
+                            <div>
+                              <div className="institutional-label">Decreased</div>
+                              <div className="institutional-value">{institutionalSummary.decreasedInstitutions ?? 'N/A'}</div>
+                            </div>
+                          </div>
+                          <div className={`institutional-activity-signal ${signalClass}`}>{signal}</div>
+                        </div>
+                      );
+                    })() : (
+                      <div style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '1rem' }}>Loading institutional activity...</div>
+                    )}
+                  </div>
+                  {/* Existing Sentiment Table */}
                   <table className="sentiment-table">
                     <thead>
                       <tr>

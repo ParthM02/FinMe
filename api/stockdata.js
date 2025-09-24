@@ -42,12 +42,42 @@ export default async function handler(req, res) {
       days_to_cover: item.days_to_cover
     }));
 
+    //  Institutional holdings API
+    const holdingsUrl = `https://api.nasdaq.com/api/company/${ticker.toUpperCase()}/institutional-holdings?limit=10&type=TOTAL&sortColumn=marketValue`;
+    const holdingsResponse = await fetch(holdingsUrl, {
+        headers: {
+            "User-Agent": "Mozilla/5.0 ",
+            "Accept": "application/json"
+        }
+    });
+    if (!holdingsResponse.ok) {
+      throw new Error("Failed to fetch institutional holdings");
+    }
+
+    const holdingsData = await holdingsResponse.json();
+
+    // Parse only the data I care about
+    const activeRows = holdingsData?.data?.activePositions?.rows || [];
+    const newSoldRows = holdingsData?.data?.newSoldOutPositions?.rows || [];
+
+    const institutionalSummary = {
+      increasedInstitutions: activeRows[0]?.holders ?? null,
+      increasedShares: activeRows[0]?.shares ?? null,
+      decreasedInstitutions: activeRows[1]?.holders ?? null,
+      decreasedShares: activeRows[1]?.shares ?? null,
+      newInstitutions: newSoldRows[0]?.holders ?? null,
+      newShares: newSoldRows[0]?.shares ?? null,
+      soldOutInstitutions: newSoldRows[1]?.holders ?? null,
+      soldOutShares: newSoldRows[1]?.shares ?? null,
+    };
+
     res.status(200).json({
       previousClose,
       vwap,
       close,
       headlines,
-      shortInterest
+      shortInterest,
+      institutionalSummary
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -458,6 +458,62 @@ body {
   color: #22c55e;
 }
 
+/* Institutional Activity Widget */
+.institutional-activity-widget {
+  background: #111;
+  border-radius: 1.5rem;
+  padding: 1.25rem 1rem 1rem 1rem;
+  margin: 0 auto 1rem auto;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  max-width: 340px;
+  text-align: center;
+}
+
+.institutional-activity-title {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.institutional-activity-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.institutional-activity-counts {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  gap: 2rem;
+}
+
+.institutional-label {
+  font-size: 0.95rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.institutional-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.institutional-activity-signal {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.institutional-activity-signal.bullish {
+  color: #22c55e;
+}
+.institutional-activity-signal.bearish {
+  color: #ef4444;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
