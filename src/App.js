@@ -472,4 +472,45 @@ const App = () => {
                         }
 
                         const barClasses = bars.map((bar) => {
-                          if
+                          if (bar.value === null || bar.value === undefined) {
+                            return 'invisible-bar';
+                          }
+                          const fillHeight = (bar.value / maxValue) * 100;
+                          return `bar ${fillHeight > 0 ? (fillHeight > 50 ? 'green-bar' : 'yellow-bar') : 'red-bar'}`;
+                        });
+
+                        return (
+                          <div className="volume-bars_container">
+                            {bars.map((bar, idx) => (
+                              <div
+                                key={idx}
+                                className={barClasses[idx]}
+                                style={{
+                                  height: bar.value !== null && bar.value !== undefined ? `${(bar.value / maxValue) * 100}%` : '0%',
+                                  transition: 'height 0.3s ease',
+                                  position: 'relative'
+                                }}
+                              >
+                                {bar.value !== null && bar.value !== undefined && (
+                                  <div className="bar-value" style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
+                                    {bar.value}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()
+                    )}
+                  </div>
+                </>
+              ) : null}
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default App;
