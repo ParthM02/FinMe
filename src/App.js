@@ -446,16 +446,20 @@ const App = () => {
                         return (
                           <>
                             <div style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.5rem' }}>
-                              Most Popular Sentiment
+                              News Sentiment
                             </div>
                             <div style={{ fontSize: '2rem', fontWeight: 700, color }}>
-                              {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
+                              {sentiment === 'positive'
+                                ? 'Bullish'
+                                : sentiment === 'negative'
+                                ? 'Bearish'
+                                : 'Neutral'}
                             </div>
                             <div style={{ color: '#9ca3af', marginTop: '0.25rem' }}>
-                              Headlines: {count}
+                              Headlines: {count} out of 10
                             </div>
                             <div style={{ marginTop: '0.75rem', fontSize: '0.95rem', color: '#a855f7' }}>
-                              {sentimentExpanded ? '▼ Hide Details' : '▲ Show Details'}
+                              {sentimentExpanded ? '▼ Hide Headlines' : '▲ Show Headlines'}
                             </div>
                           </>
                         );
