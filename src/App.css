@@ -571,6 +571,17 @@ body {
   text-align: center;
 }
 
+/* Widget Row */
+.widget-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
