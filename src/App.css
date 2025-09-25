@@ -575,11 +575,10 @@ body {
 .widget-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  justify-content: center;
+  gap: 1rem; /* Updated from 1.5rem for a smaller gap (1rem = 16px) */
+  justify-content: flex-start; /* Changed from 'center' to 'flex-start' */
   align-items: stretch;
   width: 100%;
-  margin-bottom: 2rem;
 }
 
 /* Responsive Styles */
