@@ -433,7 +433,7 @@ const App = () => {
                       transition: 'box-shadow 0.2s',
                       border: sentimentExpanded ? '2px solid #a855f7' : 'none'
                     }}
-                    onClick={() => setSentimentExpanded(true)}
+                    onClick={() => setSentimentExpanded(!sentimentExpanded)}
                   >
                     {headlines.length === 0 ? (
                       <span>Loading sentiment...</span>
@@ -455,68 +455,57 @@ const App = () => {
                               Headlines: {count}
                             </div>
                             <div style={{ marginTop: '0.75rem', fontSize: '0.95rem', color: '#a855f7' }}>
-                              {'▲ Show Details'}
+                              {sentimentExpanded ? '▼ Hide Details' : '▲ Show Details'}
                             </div>
                           </>
                         );
                       })()
                     )}
                   </div>
-                  {/* Modal Popup for Table */}
+                  {/* Expand to show table */}
                   {sentimentExpanded && (
-                    <div className="sentiment-modal-overlay" onClick={() => setSentimentExpanded(false)}>
-                      <div className="sentiment-modal" onClick={e => e.stopPropagation()}>
-                        <button
-                          className="sentiment-modal-close"
-                          onClick={() => setSentimentExpanded(false)}
-                          aria-label="Close"
-                        >
-                          ×
-                        </button>
-                        <table className="sentiment-table" style={{ marginTop: '1.5rem' }}>
-                          <thead>
-                            <tr>
-                              <th>Headline</th>
-                              <th>Published</th>
-                              <th>Sentiment</th>
+                    <table className="sentiment-table" style={{ marginTop: '1.5rem' }}>
+                      <thead>
+                        <tr>
+                          <th>Headline</th>
+                          <th>Published</th>
+                          <th>Sentiment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {headlines.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} style={{ color: '#9ca3af', textAlign: 'center' }}>Loading headlines...</td>
+                          </tr>
+                        ) : (
+                          headlines.map((item, idx) => (
+                            <tr key={idx}>
+                              <td>
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="sentiment-link"
+                                >
+                                  {item.title}
+                                </a>
+                              </td>
+                              <td style={{ color: '#9ca3af' }}>{formatDate(item.published_utc)}</td>
+                              <td style={{
+                                color:
+                                  item.sentiment === 'positive'
+                                    ? '#22c55e'
+                                    : item.sentiment === 'negative'
+                                    ? '#ef4444'
+                                    : '#d1d5db'
+                              }}>
+                                {item.sentiment ?? 'N/A'}
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {headlines.length === 0 ? (
-                              <tr>
-                                <td colSpan={3} style={{ color: '#9ca3af', textAlign: 'center' }}>Loading headlines...</td>
-                              </tr>
-                            ) : (
-                              headlines.map((item, idx) => (
-                                <tr key={idx}>
-                                  <td>
-                                    <a
-                                      href={item.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="sentiment-link"
-                                    >
-                                      {item.title}
-                                    </a>
-                                  </td>
-                                  <td style={{ color: '#9ca3af' }}>{formatDate(item.published_utc)}</td>
-                                  <td style={{
-                                    color:
-                                      item.sentiment === 'positive'
-                                        ? '#22c55e'
-                                        : item.sentiment === 'negative'
-                                        ? '#ef4444'
-                                        : '#d1d5db'
-                                  }}>
-                                    {item.sentiment ?? 'N/A'}
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   )}
                   {/* Institutional Activity Widgets */}
                   <div className="widget-row">
