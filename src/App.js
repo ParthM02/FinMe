@@ -21,6 +21,7 @@ const App = () => {
   const [rsiValues, setRsiValues] = useState([]);
   const [cooldown, setCooldown] = useState(0);
   const [cooldownActive, setCooldownActive] = useState(false);
+  const [sentimentExpanded, setSentimentExpanded] = useState(false);
   const widgetRef = useRef(null);
   const chartRef = useRef(null); // Add this line
 
@@ -180,6 +181,21 @@ const App = () => {
   const formatDate = (utcString) => {
     const date = new Date(utcString);
     return date.toLocaleString();
+  };
+
+  // Helper to get most popular sentiment
+  const getPopularSentiment = (headlines) => {
+    const counts = { positive: 0, negative: 0, neutral: 0 };
+    headlines.forEach(h => {
+      if (h.sentiment === 'positive') counts.positive++;
+      else if (h.sentiment === 'negative') counts.negative++;
+      else counts.neutral++;
+    });
+    const max = Math.max(counts.positive, counts.negative, counts.neutral);
+    if (max === 0) return { sentiment: 'neutral', count: 0 };
+    if (max === counts.positive) return { sentiment: 'positive', count: counts.positive };
+    if (max === counts.negative) return { sentiment: 'negative', count: counts.negative };
+    return { sentiment: 'neutral', count: counts.neutral };
   };
 
   return (
@@ -402,6 +418,96 @@ const App = () => {
                 )
               ) : activeTab === 'Sentiment' ? (
                 <div className="sentiment-widget">
+                  {/* Collapsible Sentiment Widget */}
+                  <div
+                    className="sentiment-summary-widget"
+                    style={{
+                      background: '#111',
+                      borderRadius: '1.5rem',
+                      padding: '2rem 1rem',
+                      boxShadow: '0 2px 16px rgba(0,0,0,0.25)',
+                      maxWidth: 340,
+                      margin: '0 auto 1rem auto',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'box-shadow 0.2s',
+                      border: sentimentExpanded ? '2px solid #a855f7' : 'none'
+                    }}
+                    onClick={() => setSentimentExpanded(!sentimentExpanded)}
+                  >
+                    {headlines.length === 0 ? (
+                      <span>Loading sentiment...</span>
+                    ) : (
+                      (() => {
+                        const { sentiment, count } = getPopularSentiment(headlines);
+                        let color = '#fde047';
+                        if (sentiment === 'positive') color = '#22c55e';
+                        else if (sentiment === 'negative') color = '#ef4444';
+                        return (
+                          <>
+                            <div style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.5rem' }}>
+                              Most Popular Sentiment
+                            </div>
+                            <div style={{ fontSize: '2rem', fontWeight: 700, color }}>
+                              {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
+                            </div>
+                            <div style={{ color: '#9ca3af', marginTop: '0.25rem' }}>
+                              Headlines: {count}
+                            </div>
+                            <div style={{ marginTop: '0.75rem', fontSize: '0.95rem', color: '#a855f7' }}>
+                              {sentimentExpanded ? '▼ Hide Details' : '▲ Show Details'}
+                            </div>
+                          </>
+                        );
+                      })()
+                    )}
+                  </div>
+                  {/* Expand to show table */}
+                  {sentimentExpanded && (
+                    <table className="sentiment-table" style={{ marginTop: '1.5rem' }}>
+                      <thead>
+                        <tr>
+                          <th>Headline</th>
+                          <th>Published</th>
+                          <th>Sentiment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {headlines.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} style={{ color: '#9ca3af', textAlign: 'center' }}>Loading headlines...</td>
+                          </tr>
+                        ) : (
+                          headlines.map((item, idx) => (
+                            <tr key={idx}>
+                              <td>
+                                <a
+                                  href={item.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="sentiment-link"
+                                >
+                                  {item.title}
+                                </a>
+                              </td>
+                              <td style={{ color: '#9ca3af' }}>{formatDate(item.published_utc)}</td>
+                              <td style={{
+                                color:
+                                  item.sentiment === 'positive'
+                                    ? '#22c55e'
+                                    : item.sentiment === 'negative'
+                                    ? '#ef4444'
+                                    : '#d1d5db'
+                              }}>
+                                {item.sentiment ?? 'N/A'}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                  {/* Institutional Activity Widgets */}
                   <div className="widget-row">
                     {/* Institutional Activity Widget */}
                     <div className="institutional-activity-widget">
@@ -483,49 +589,6 @@ const App = () => {
                       )}
                     </div>
                   </div>
-                  {/* Existing Sentiment Table */}
-                  <table className="sentiment-table" style={{ marginTop: '1.5rem' }}>
-                    <thead>
-                      <tr>
-                        <th>Headline</th>
-                        <th>Published</th>
-                        <th>Sentiment</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {headlines.length === 0 ? (
-                        <tr>
-                          <td colSpan={3} style={{ color: '#9ca3af', textAlign: 'center' }}>Loading headlines...</td>
-                        </tr>
-                      ) : (
-                        headlines.map((item, idx) => (
-                          <tr key={idx}>
-                            <td>
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="sentiment-link"
-                              >
-                                {item.title}
-                              </a>
-                            </td>
-                            <td style={{ color: '#9ca3af' }}>{formatDate(item.published_utc)}</td>
-                            <td style={{
-                              color:
-                                item.sentiment === 'positive'
-                                  ? '#22c55e'
-                                  : item.sentiment === 'negative'
-                                  ? '#ef4444'
-                                  : '#d1d5db'
-                            }}>
-                              {item.sentiment ?? 'N/A'}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
                 </div>
               ) : activeTab === 'Fundamental' ? (
                 <div className="widget-row">
