@@ -22,6 +22,12 @@ const App = () => {
   const [cooldown, setCooldown] = useState(0);
   const [cooldownActive, setCooldownActive] = useState(false);
   const [sentimentExpanded, setSentimentExpanded] = useState(false);
+  const [sectionScores, setSectionScores] = useState({
+    Fundamental: null,
+    Technical: null,
+    Options: null,
+    Sentiment: null
+  });
   const widgetRef = useRef(null);
   const chartRef = useRef(null); // Add this line
 
@@ -198,6 +204,94 @@ const App = () => {
     return { sentiment: 'neutral', count: counts.neutral };
   };
 
+  // Add this helper function to calculate scores
+  const calculateSectionScores = () => {
+    const scores = {
+      Fundamental: null,
+      Technical: null,
+      Options: null,
+      Sentiment: null
+    };
+
+    // Fundamental Score (Days to Cover + Short Squeeze)
+    if (shortInterest.length >= 5) {
+      const lastFive = shortInterest.slice(0, 5).reverse();
+      const latest = lastFive[lastFive.length - 1]?.days_to_cover;
+      const previous = lastFive[lastFive.length - 2]?.days_to_cover;
+      
+      let daysScore = 50;
+      if (latest < previous) daysScore = 100; // Bullish
+      else if (latest > previous) daysScore = 0; // Bearish
+      
+      const dtc = shortInterest[0]?.days_to_cover;
+      let squeezeScore = 0;
+      if (dtc >= 8) squeezeScore = 100; // High
+      else if (dtc >= 3) squeezeScore = 50; // Moderate
+      
+      scores.Fundamental = Math.round((daysScore + squeezeScore) / 2);
+    }
+
+    // Technical Score (VWAP + 3 RSI indicators)
+    if (vwap !== null && close !== null && rsiValues.length >= 10) {
+      let vwapScore = close > vwap ? 100 : 0;
+      
+      // RSI Trend
+      const uptrend = isUptrendByRSI(rsiValues);
+      let trendScore = uptrend ? 100 : 0;
+      
+      // RSI Crossover
+      const crossover = rsiCrossoverSignal(rsiValues);
+      let crossoverScore = 50;
+      if (crossover === 1) crossoverScore = 100;
+      else if (crossover === -1) crossoverScore = 0;
+      
+      // RSI Overbought/Oversold
+      const level = rsiOverboughtOversoldSignal(rsiValues);
+      let levelScore = 50;
+      if (level === 1) levelScore = 100;
+      else if (level === -1) levelScore = 0;
+      
+      scores.Technical = Math.round((vwapScore + trendScore + crossoverScore + levelScore) / 4);
+    }
+
+    // Options Score (Put/Call Ratio)
+    if (putCallRatio !== null) {
+      scores.Options = putCallRatio > 1 ? 0 : 100;
+    }
+
+    // Sentiment Score (News + 3 Institutional indicators)
+    if (headlines.length > 0 && institutionalSummary) {
+      const { sentiment } = getPopularSentiment(headlines);
+      let newsScore = 50;
+      if (sentiment === 'positive') newsScore = 100;
+      else if (sentiment === 'negative') newsScore = 0;
+      
+      // Institutional Position
+      const increased = parseInt(institutionalSummary.increasedInstitutions?.replace(/,/g, '') || 0, 10);
+      const decreased = parseInt(institutionalSummary.decreasedInstitutions?.replace(/,/g, '') || 0, 10);
+      let positionScore = increased > decreased ? 100 : 0;
+      
+      // Institutional Shares
+      const increasedShares = parseInt(institutionalSummary.increasedShares?.replace(/,/g, '') || 0, 10);
+      const decreasedShares = parseInt(institutionalSummary.decreasedShares?.replace(/,/g, '') || 0, 10);
+      let sharesScore = increasedShares > decreasedShares ? 100 : 0;
+      
+      // New vs Sold Out
+      const newInstitutions = parseInt(institutionalSummary.newInstitutions?.replace(/,/g, '') || 0, 10);
+      const soldOutInstitutions = parseInt(institutionalSummary.soldOutInstitutions?.replace(/,/g, '') || 0, 10);
+      let newVsSoldScore = newInstitutions > soldOutInstitutions ? 100 : 0;
+      
+      scores.Sentiment = Math.round((newsScore + positionScore + sharesScore + newVsSoldScore) / 4);
+    }
+
+    setSectionScores(scores);
+  };
+
+  // Call calculateSectionScores whenever relevant data changes
+  useEffect(() => {
+    calculateSectionScores();
+  }, [shortInterest, vwap, close, rsiValues, putCallRatio, headlines, institutionalSummary]);
+
   return (
     <div className="app-container">
       {/* Header */}
@@ -285,7 +379,18 @@ const App = () => {
             <div className="card">
               <div className="card-content">
                 <h3 className="card-subtitle">Score</h3>
-                <h2 className="card-rating">Rating</h2>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <h2 className="card-rating" style={{ 
+                    color: sectionScores[activeTab] !== null 
+                      ? (sectionScores[activeTab] >= 70 ? '#22c55e' 
+                        : sectionScores[activeTab] >= 40 ? '#fde047' 
+                        : '#ef4444')
+                      : '#fff'
+                  }}>
+                    {sectionScores[activeTab] !== null ? sectionScores[activeTab] : '--'}
+                  </h2>
+                  <span style={{ fontSize: '1.5rem', color: '#9ca3af' }}>/100</span>
+                </div>
                 
                 <div className="tabs-container">
                   <div className="tabs">
