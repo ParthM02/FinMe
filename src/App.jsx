@@ -45,7 +45,6 @@ const App = () => {
           <div className="left-column">
             <div className="card">
               <div className="card-content">
-                <h3 className="card-title">Ticker Info</h3>
                 <TradingViewWidget type="info" symbol={searchTicker} />
               </div>
             </div>
@@ -60,7 +59,6 @@ const App = () => {
           <div className="right-column">
             <div className="card chart-card">
               <div className="card-content">
-                <h3 className="card-title">Chart</h3>
                 <TradingViewWidget type="chart" symbol={searchTicker} />
               </div>
             </div>

@@ -40,11 +40,12 @@ const TechnicalView = ({ vwap, close, rsiValues = [] }) => {
     const latestRsi = rsiValues[rsiValues.length - 1];
     const formattedRsi = typeof latestRsi === 'number' ? latestRsi.toFixed(2) : 'N/A';
     return (
-      <div className={`rsi-value ${signalClass}`}>
-        {label}
-        <span style={{ fontSize: '0.9em', color: '#9ca3af', marginLeft: '0.35rem' }}>
-          ({formattedRsi})
-        </span>
+      <div
+        className={`rsi-value ${signalClass}`}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem', textAlign: 'center' }}
+      >
+        <span>{label}</span>
+        <span style={{ fontSize: '0.85em', color: '#9ca3af' }}>RSI: {formattedRsi}</span>
       </div>
     );
   };
