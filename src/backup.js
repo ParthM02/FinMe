@@ -1,3 +1,6 @@
+// Backup of previous app.js before major refactor
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import {
