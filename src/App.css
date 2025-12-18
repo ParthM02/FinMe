@@ -482,8 +482,8 @@ body {
 }
 
 .short-interest-section {
-  background: #0b1120;
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: #111;
+  border: 1px solid rgb(31 41 55);
 }
 
 .financial-ratios-header {
@@ -590,7 +590,10 @@ body {
 }
 
 .short-interest-grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .ratio-bar-value {

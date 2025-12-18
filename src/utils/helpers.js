@@ -8,20 +8,21 @@ const sanitizeNumeric = (value) => {
 
 const sortValueKeys = (keys) =>
   keys
-    .filter((key) => key.startsWith('value'))
+    .filter((key) => key.startsWith('value') && key !== 'value1')
     .sort((a, b) => {
       const aIdx = parseInt(a.replace('value', ''), 10);
       const bIdx = parseInt(b.replace('value', ''), 10);
       return aIdx - bIdx;
     });
 
-export const extractFinancialRatios = (financials, { maxPeriods = 4 } = {}) => {
+export const extractFinancialRatios = (financials, { maxPeriods = null } = {}) => {
   const table = financials?.data?.financialRatiosTable;
   if (!table) return [];
 
   const headers = table.headers || {};
   const rows = table.rows || [];
-  const ratioColumns = sortValueKeys(Object.keys(headers)).slice(0, maxPeriods);
+  const allColumns = sortValueKeys(Object.keys(headers));
+  const ratioColumns = maxPeriods ? allColumns.slice(0, maxPeriods) : allColumns;
 
   if (!ratioColumns.length) return [];
 

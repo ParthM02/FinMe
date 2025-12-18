@@ -2,6 +2,21 @@ import { isUptrendByRSI, rsiCrossoverSignal, rsiOverboughtOversoldSignal } from 
 import { getPopularSentiment, extractFinancialRatios } from './helpers';
 
 const MAX_RATIO_METRICS = 6;
+const SCORE = { bullish: 100, neutral: 50, bearish: 0 };
+
+const scoreFromDifference = (latest, previous, { bullishWhenDecreasing = false } = {}) => {
+  if (typeof latest !== 'number' || typeof previous !== 'number') return null;
+  if (latest === previous) return SCORE.neutral;
+  const isBullish = bullishWhenDecreasing ? latest < previous : latest > previous;
+  return isBullish ? SCORE.bullish : SCORE.bearish;
+};
+
+const scoreFromDtcValue = (dtc) => {
+  if (typeof dtc !== 'number') return null;
+  if (dtc >= 8) return SCORE.bullish;
+  if (dtc >= 3) return SCORE.neutral;
+  return SCORE.bearish;
+};
 
 export const calculateAllScores = ({
   shortInterest,
@@ -17,33 +32,25 @@ export const calculateAllScores = ({
   const fundamentalComponents = [];
 
   // Fundamental Score
-  if (shortInterest?.length >= 5) {
-    const lastFive = shortInterest.slice(0, 5).reverse();
-    const latest = lastFive[lastFive.length - 1]?.days_to_cover;
-    const previous = lastFive[lastFive.length - 2]?.days_to_cover;
-    const daysScore = latest < previous ? 100 : 0;
-    const dtc = shortInterest[0]?.days_to_cover;
-    const squeezeScore = dtc >= 8 ? 100 : (dtc >= 3 ? 50 : 0);
-    fundamentalComponents.push(daysScore, squeezeScore);
+  if (shortInterest?.length >= 2) {
+    const latest = shortInterest[0]?.days_to_cover;
+    const previous = shortInterest[1]?.days_to_cover;
+    const daysScore = scoreFromDifference(latest, previous, { bullishWhenDecreasing: true });
+    if (daysScore !== null) fundamentalComponents.push(daysScore);
   }
 
-  const ratioSeries = extractFinancialRatios(financials).slice(0, MAX_RATIO_METRICS);
-  if (ratioSeries.length) {
-    const ratioScores = ratioSeries
-      .map((ratio) => {
-        const latest = ratio.values[0]?.value;
-        const previous = ratio.values[1]?.value;
-        if (typeof latest !== 'number' || typeof previous !== 'number') return null;
-        if (latest === previous) return 50;
-        return latest > previous ? 100 : 0;
-      })
-      .filter((score) => score !== null);
+  const latestDtc = shortInterest?.[0]?.days_to_cover;
+  const squeezeScore = scoreFromDtcValue(latestDtc);
+  if (squeezeScore !== null) fundamentalComponents.push(squeezeScore);
 
-    if (ratioScores.length) {
-      const ratioScore = ratioScores.reduce((sum, score) => sum + score, 0) / ratioScores.length;
-      fundamentalComponents.push(ratioScore);
-    }
-  }
+  extractFinancialRatios(financials)
+    .slice(0, MAX_RATIO_METRICS)
+    .forEach((ratio) => {
+      const latest = ratio.values[0]?.value;
+      const previous = ratio.values[1]?.value;
+      const ratioScore = scoreFromDifference(latest, previous);
+      if (ratioScore !== null) fundamentalComponents.push(ratioScore);
+    });
 
   if (fundamentalComponents.length) {
     const total = fundamentalComponents.reduce((sum, score) => sum + score, 0);

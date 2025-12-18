@@ -78,7 +78,7 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
   }, [shortInterest]);
 
   const ratioWidgets = useMemo(() => {
-    const ratios = extractFinancialRatios(financials, { maxPeriods: quarterColumns });
+    const ratios = extractFinancialRatios(financials);
     return ratios
       .filter((ratio) => Array.isArray(ratio.values) && ratio.values.length >= 2)
       .slice(0, ratioMetricLimit)
@@ -209,7 +209,7 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
                           textAnchor="middle"
                           className="ratio-bar-label"
                         >
-                          {bar.date ? bar.date.slice(5).replace('-', '/') : '—'}
+                          {bar.date ? formatSettlementDate(bar.date) : '—'}
                         </text>
                       </g>
                     );
