@@ -53,7 +53,7 @@ const App = () => {
             <ScoreCard 
               activeTab={activeTab} 
               setActiveTab={setActiveTab} 
-              score={sectionScores[activeTab]} 
+              scores={sectionScores} 
             />
           </div>
 
