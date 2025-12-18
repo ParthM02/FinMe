@@ -2,7 +2,7 @@ import React from 'react';
 
 const SearchBar = ({ ticker, setTicker, handleSearch, cooldown, cooldownActive }) => (
   <div className="search-container">
-    <form onSubmit={handleSearch} className="search-form">
+    <form onSubmit={handleSearch} className="search-form" style={{ position: 'relative' }}>
       <input
         type="text"
         value={ticker}
@@ -22,7 +22,21 @@ const SearchBar = ({ ticker, setTicker, handleSearch, cooldown, cooldownActive }
         </svg>
       </button>
       {cooldownActive && (
-        <div className="cooldown-badge">
+        <div
+          style={{
+            position: 'absolute',
+            right: '3.5rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#fde047',
+            fontWeight: 500,
+            fontSize: '1rem',
+            background: 'rgba(0,0,0,0.7)',
+            borderRadius: '9999px',
+            padding: '0.25rem 0.75rem',
+            pointerEvents: 'none'
+          }}
+        >
           API Cooldown: {cooldown}s
         </div>
       )}
