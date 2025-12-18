@@ -2,8 +2,15 @@ import { useState, useEffect } from 'react';
 
 export const useStockData = (searchTicker, useTestData) => {
   const [data, setData] = useState({
-    vwap: null, close: null, headlines: [], institutionalSummary: null, 
-    shortInterest: [], rsiValues: [], optionData: null, putCallRatio: null
+    vwap: null,
+    close: null,
+    headlines: [],
+    institutionalSummary: null,
+    shortInterest: [],
+    rsiValues: [],
+    optionData: null,
+    putCallRatio: null,
+    financials: null
   });
 
   useEffect(() => {
@@ -20,7 +27,8 @@ export const useStockData = (searchTicker, useTestData) => {
           headlines: d.headlines || [],
           institutionalSummary: d.institutionalSummary || null,
           shortInterest: d.shortInterest || [],
-          rsiValues: d.rsiValues || []
+          rsiValues: d.rsiValues || [],
+          financials: d.financials || null
         }));
       } catch (e) { console.error(e); }
     };

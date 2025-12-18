@@ -50,10 +50,10 @@ export default async function handler(req, res) {
     //  Institutional holdings API
     const holdingsUrl = `https://api.nasdaq.com/api/company/${ticker.toUpperCase()}/institutional-holdings?limit=10&type=TOTAL&sortColumn=marketValue`;
     const holdingsResponse = await fetch(holdingsUrl, {
-        headers: {
-            "User-Agent": "Mozilla/5.0 ",
-            "Accept": "application/json"
-        }
+      headers: {
+        "User-Agent": "Mozilla/5.0 ",
+        "Accept": "application/json"
+      }
     });
     if (!holdingsResponse.ok) {
       throw new Error("Failed to fetch institutional holdings");
@@ -76,6 +76,26 @@ export default async function handler(req, res) {
       soldOutShares: newSoldRows[1]?.shares ?? null,
     };
 
+    // Financial statements payload (keep raw for client-side parsing)
+    let financials = null;
+    try {
+      const financialsUrl = `https://api.nasdaq.com/api/company/${ticker.toUpperCase()}/financials?frequency=2`;
+      const financialsResponse = await fetch(financialsUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 ",
+          "Accept": "application/json"
+        }
+      });
+
+      if (!financialsResponse.ok) {
+        throw new Error('Failed to fetch financials');
+      }
+
+      financials = await financialsResponse.json();
+    } catch (financialError) {
+      console.error('Unable to load financials', financialError);
+    }
+
     res.status(200).json({
       previousClose,
       vwap,
@@ -83,7 +103,8 @@ export default async function handler(req, res) {
       rsiValues,
       headlines,
       shortInterest,
-      institutionalSummary
+      institutionalSummary,
+      financials
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

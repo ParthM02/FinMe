@@ -458,6 +458,108 @@ body {
   color: #22c55e;
 }
 
+/* Financial Ratios Section */
+.financial-ratios-section {
+  background: #111;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+  flex: 1 1 100%;
+}
+
+.financial-ratios-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.financial-ratios-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.financial-ratios-subtitle {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+.financial-ratios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.ratio-widget {
+  background: rgba(17, 24, 39, 0.75);
+  border: 1px solid rgb(31 41 55);
+  border-radius: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ratio-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.ratio-widget-metric {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ratio-widget-category {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+}
+
+.ratio-trend {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ratio-trend.bullish {
+  color: #22c55e;
+}
+
+.ratio-trend.bearish {
+  color: #ef4444;
+}
+
+.ratio-trend.neutral {
+  color: #fde047;
+}
+
+.ratio-widget-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.ratio-chart {
+  width: 100%;
+}
+
+.ratio-bar-value {
+  font-size: 11px;
+  fill: #d1d5db;
+}
+
+.ratio-bar-label {
+  font-size: 11px;
+  fill: #9ca3af;
+}
+
 /* Institutional Activity Widget */
 .institutional-activity-widget {
   background: #111;

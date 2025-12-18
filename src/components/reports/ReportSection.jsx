@@ -7,7 +7,12 @@ import SentimentView from './SentimentView';
 const ReportSection = ({ activeTab, stockData }) => {
   const renderContent = () => {
     switch (activeTab) {
-      case 'Fundamental': return <FundamentalView shortInterest={stockData.shortInterest} />;
+      case 'Fundamental': return (
+        <FundamentalView
+          shortInterest={stockData.shortInterest}
+          financials={stockData.financials}
+        />
+      );
       case 'Technical': return <TechnicalView vwap={stockData.vwap} close={stockData.close} rsiValues={stockData.rsiValues} />;
       case 'Options': return <OptionsView putCallRatio={stockData.putCallRatio} />;
       case 'Sentiment': return <SentimentView headlines={stockData.headlines} institutionalSummary={stockData.institutionalSummary} />;
