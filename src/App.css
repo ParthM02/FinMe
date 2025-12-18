@@ -479,11 +479,15 @@ body {
   padding: 1.5rem;
   box-shadow: 0 2px 16px rgba(0,0,0,0.25);
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .short-interest-section {
   background: #111;
   border: 1px solid rgb(31 41 55);
+  box-sizing: border-box;
 }
 
 .financial-ratios-header {
@@ -509,6 +513,8 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ratio-widget {
@@ -594,6 +600,7 @@ body {
   max-width: 720px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .ratio-bar-value {
@@ -732,6 +739,12 @@ body {
 .fundamental-sections {
   flex-direction: column;
   align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.short-squeeze-card .ratio-widget-value {
+  text-align: center;
 }
 
 /* Responsive Styles */
