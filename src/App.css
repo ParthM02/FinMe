@@ -458,6 +458,20 @@ body {
   color: #22c55e;
 }
 
+.short-squeeze-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
 /* Financial Ratios Section */
 .financial-ratios-section {
   background: #111;
@@ -465,6 +479,11 @@ body {
   padding: 1.5rem;
   box-shadow: 0 2px 16px rgba(0,0,0,0.25);
   flex: 1 1 100%;
+}
+
+.short-interest-section {
+  background: #0b1120;
+  border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 .financial-ratios-header {
@@ -548,6 +567,30 @@ body {
 
 .ratio-chart {
   width: 100%;
+}
+
+.ratio-loading {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.ratio-widget-footnote {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ratio-supplement {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0.75rem 0 0;
+}
+
+.short-interest-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .ratio-bar-value {
@@ -681,6 +724,11 @@ body {
   justify-content: flex-start; /* Changed from 'center' to 'flex-start' */
   align-items: stretch;
   width: 100%;
+}
+
+.fundamental-sections {
+  flex-direction: column;
+  align-items: stretch;
 }
 
 /* Responsive Styles */

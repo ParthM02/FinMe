@@ -1,18 +1,53 @@
 import { isUptrendByRSI, rsiCrossoverSignal, rsiOverboughtOversoldSignal } from '../technicalAnalysis';
-import { getPopularSentiment } from './helpers';
+import { getPopularSentiment, extractFinancialRatios } from './helpers';
 
-export const calculateAllScores = ({ shortInterest, vwap, close, rsiValues, putCallRatio, headlines, institutionalSummary }) => {
+const MAX_RATIO_METRICS = 6;
+
+export const calculateAllScores = ({
+  shortInterest,
+  vwap,
+  close,
+  rsiValues,
+  putCallRatio,
+  headlines,
+  institutionalSummary,
+  financials
+}) => {
   const scores = { Fundamental: null, Technical: null, Options: null, Sentiment: null };
+  const fundamentalComponents = [];
 
   // Fundamental Score
   if (shortInterest?.length >= 5) {
     const lastFive = shortInterest.slice(0, 5).reverse();
     const latest = lastFive[lastFive.length - 1]?.days_to_cover;
     const previous = lastFive[lastFive.length - 2]?.days_to_cover;
-    let daysScore = latest < previous ? 100 : 0;
+    const daysScore = latest < previous ? 100 : 0;
     const dtc = shortInterest[0]?.days_to_cover;
-    let squeezeScore = dtc >= 8 ? 100 : (dtc >= 3 ? 50 : 0);
-    scores.Fundamental = Math.round((daysScore + squeezeScore) / 2);
+    const squeezeScore = dtc >= 8 ? 100 : (dtc >= 3 ? 50 : 0);
+    fundamentalComponents.push(daysScore, squeezeScore);
+  }
+
+  const ratioSeries = extractFinancialRatios(financials).slice(0, MAX_RATIO_METRICS);
+  if (ratioSeries.length) {
+    const ratioScores = ratioSeries
+      .map((ratio) => {
+        const latest = ratio.values[0]?.value;
+        const previous = ratio.values[1]?.value;
+        if (typeof latest !== 'number' || typeof previous !== 'number') return null;
+        if (latest === previous) return 50;
+        return latest > previous ? 100 : 0;
+      })
+      .filter((score) => score !== null);
+
+    if (ratioScores.length) {
+      const ratioScore = ratioScores.reduce((sum, score) => sum + score, 0) / ratioScores.length;
+      fundamentalComponents.push(ratioScore);
+    }
+  }
+
+  if (fundamentalComponents.length) {
+    const total = fundamentalComponents.reduce((sum, score) => sum + score, 0);
+    scores.Fundamental = Math.round(total / fundamentalComponents.length);
   }
 
   // Technical Score

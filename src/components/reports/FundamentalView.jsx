@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { extractFinancialRatios } from '../../utils/helpers';
 
 const quarterColumns = 4;
 const ratioMetricLimit = 6;
@@ -18,77 +19,26 @@ const formatMetricValue = (value, unit) => {
   return value.toFixed(2);
 };
 
-const sanitizeNumeric = (value) => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  if (!trimmed || trimmed === '--') return null;
-  const numeric = Number(trimmed.replace(/[,$%]/g, ''));
-  return Number.isFinite(numeric) ? numeric : null;
-};
-
-const extractFinancialRatios = (financials) => {
-  const table = financials?.data?.financialRatiosTable;
-  if (!table) return [];
-
-  const headers = table.headers || {};
-  const rows = table.rows || [];
-  const ratioColumns = Object.keys(headers)
-    .filter((key) => key !== 'value1')
-    .sort((a, b) => {
-      const aIdx = parseInt(a.replace('value', ''), 10);
-      const bIdx = parseInt(b.replace('value', ''), 10);
-      return aIdx - bIdx;
-    })
-    .slice(0, quarterColumns);
-
-  if (!ratioColumns.length) return [];
-
-  let currentCategory = 'Financial Ratios';
-  return rows.reduce((acc, row) => {
-    if (!row) return acc;
-    const label = row.value1?.trim();
-    if (!label) return acc;
-
-    const isCategoryRow = ratioColumns.every((key) => {
-      const val = row[key];
-      return !val || val === '' || val === '--';
-    });
-
-    if (isCategoryRow) {
-      currentCategory = label;
-      return acc;
-    }
-
-    const values = ratioColumns
-      .map((key) => {
-        const value = sanitizeNumeric(row[key]);
-        if (value === null) return null;
-        return {
-          period: headers?.[key] || key,
-          value
-        };
-      })
-      .filter(Boolean);
-
-    if (!values.length) return acc;
-
-    const usesPercent = ratioColumns.some((key) => typeof row[key] === 'string' && row[key].includes('%'));
-
-    acc.push({
-      category: currentCategory,
-      metric: label,
-      unit: usesPercent ? '%' : null,
-      values
-    });
-
-    return acc;
-  }, []);
+const formatSettlementDate = (date) => {
+  if (!date) return 'N/A';
+  const [year, month, day] = date.split('-');
+  if (year && month && day) {
+    return `${month}/${day}/${year.slice(-2)}`;
+  }
+  return date;
 };
 
 const FundamentalView = ({ shortInterest = [], financials = null }) => {
   const barData = useMemo(() => {
     if (!Array.isArray(shortInterest) || shortInterest.length < 5) {
-      return { ready: false };
+      return {
+        ready: false,
+        bars: [],
+        maxValue: 1,
+        signal: 'Neutral',
+        signalClass: 'neutral',
+        barClasses: []
+      };
     }
 
     const lastFive = shortInterest.slice(0, 5).reverse();
@@ -128,7 +78,7 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
   }, [shortInterest]);
 
   const ratioWidgets = useMemo(() => {
-    const ratios = extractFinancialRatios(financials);
+    const ratios = extractFinancialRatios(financials, { maxPeriods: quarterColumns });
     return ratios
       .filter((ratio) => Array.isArray(ratio.values) && ratio.values.length >= 2)
       .slice(0, ratioMetricLimit)
@@ -186,6 +136,8 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
 
   const hasShortInterest = Array.isArray(shortInterest) && shortInterest.length > 0;
   const dtc = hasShortInterest ? shortInterest[0]?.days_to_cover : null;
+  const dtcValue = typeof dtc === 'number' ? dtc : null;
+  const latestSettlement = hasShortInterest ? shortInterest[0]?.settlement_date : null;
 
   let squeeze = 'Low';
   let squeezeClass = 'short-squeeze-low';
@@ -196,69 +148,101 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
     squeeze = 'Moderate';
     squeezeClass = 'short-squeeze-moderate';
   }
+  const squeezeTrendClass = squeezeClass === 'short-squeeze-high'
+    ? 'bullish'
+    : squeezeClass === 'short-squeeze-moderate'
+      ? 'neutral'
+      : 'bearish';
+  const shortInterestSectionVisible = hasShortInterest || barData.ready;
 
   return (
-    <div className="widget-row">
-      <div className="volume-bar-widget">
-        <div className="volume-bar-title">Days to Cover</div>
-        {!barData.ready ? (
-          <span>Loading data...</span>
-        ) : (
-          <div style={{ width: '100%', maxWidth: 320, margin: '0 auto' }}>
-            <svg width="100%" height="80" viewBox="0 0 320 80">
-              {barData.bars.map((bar, idx) => {
-                const height = Math.max(10, (bar.value / barData.maxValue) * 60);
-                return (
-                  <g key={idx}>
-                    <rect
-                      x={20 + idx * 70}
-                      y={80 - height}
-                      width={40}
-                      height={height}
-                      rx={8}
-                      className={`volume-bar-rect ${barData.barClasses[idx]}`}
-                    />
-                    <text
-                      x={40 + idx * 70}
-                      y={80 - height - 8}
-                      textAnchor="middle"
-                      className="volume-bar-value"
-                    >
-                      {bar.value?.toFixed(2) ?? 'N/A'}
-                    </text>
-                    <text
-                      x={40 + idx * 70}
-                      y={78}
-                      textAnchor="middle"
-                      className="volume-bar-label"
-                    >
-                      {bar.date?.slice(5)}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-            <div className={`volume-bar-signal ${barData.signalClass}`}>
-              {barData.signal}
+    <div className="widget-row fundamental-sections">
+      {shortInterestSectionVisible && (
+        <div className="financial-ratios-section short-interest-section">
+          <div className="financial-ratios-header">
+            <div>
+              <div className="financial-ratios-title">Short Interest</div>
+              <div className="financial-ratios-subtitle">Exchange-reported positioning</div>
             </div>
           </div>
-        )}
-      </div>
-      <div className="short-squeeze-widget">
-        <div className="short-squeeze-title">Short Squeeze Potential</div>
-        {!hasShortInterest ? (
-          <span>Loading...</span>
-        ) : (
-          <>
-            <div className={`short-squeeze-value ${squeezeClass}`}>
-              {dtc?.toFixed(2) ?? 'N/A'}
+          <div className="financial-ratios-grid short-interest-grid">
+            <div className="ratio-widget short-trend-widget">
+              <div className="ratio-widget-header">
+                <div>
+                  <div className="ratio-widget-metric">Days to Cover</div>
+                  <div className="ratio-widget-category">Short interest trend</div>
+                </div>
+                <div className={`ratio-trend ${barData.signalClass}`}>
+                  {barData.signal}
+                </div>
+              </div>
+              <div className="ratio-widget-value">
+                {dtcValue !== null ? dtcValue.toFixed(2) : 'N/A'}
+              </div>
+              {barData.ready ? (
+                <svg className="ratio-chart" width="100%" height="120" viewBox="0 0 260 120">
+                  {barData.bars.map((bar, idx) => {
+                    const height = Math.max(10, (bar.value / barData.maxValue) * 70);
+                    const x = 20 + idx * 60;
+                    const y = 100 - height;
+                    return (
+                      <g key={`short-bar-${idx}`}>
+                        <rect
+                          x={x}
+                          y={y}
+                          width={36}
+                          height={height}
+                          rx={6}
+                          className={`volume-bar-rect ${barData.barClasses[idx]}`}
+                        />
+                        <text
+                          x={x + 18}
+                          y={y - 6}
+                          textAnchor="middle"
+                          className="ratio-bar-value"
+                        >
+                          {bar.value?.toFixed(2) ?? 'N/A'}
+                        </text>
+                        <text
+                          x={x + 18}
+                          y={110}
+                          textAnchor="middle"
+                          className="ratio-bar-label"
+                        >
+                          {bar.date ? bar.date.slice(5).replace('-', '/') : '—'}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              ) : (
+                <div className="ratio-loading">Need five recent settlements to plot the trend.</div>
+              )}
             </div>
-            <div className={`short-squeeze-title ${squeezeClass}`}>
-              {squeeze}
+            <div className="ratio-widget short-squeeze-card">
+              <div className="ratio-widget-header">
+                <div>
+                  <div className="ratio-widget-metric">Short Squeeze Potential</div>
+                  <div className="ratio-widget-category">Based on latest days-to-cover</div>
+                </div>
+                <div className={`ratio-trend ${squeezeTrendClass}`}>
+                  {squeeze}
+                </div>
+              </div>
+              <div className="ratio-widget-value">
+                {dtcValue !== null ? dtcValue.toFixed(2) : 'N/A'}
+              </div>
+              <div className={`short-squeeze-pill ${squeezeClass}`}>
+                {squeeze}
+              </div>
+              <div className="ratio-widget-footnote">
+                {latestSettlement ? `Settlement ${formatSettlementDate(latestSettlement)}` : 'Awaiting settlement data'}
+              </div>
+              <p className="ratio-supplement">Elevated squeeze risk once days-to-cover exceeds 8.</p>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
       {ratioWidgets.length > 0 && (
         <div className="financial-ratios-section">
           <div className="financial-ratios-header">
