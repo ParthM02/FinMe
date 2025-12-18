@@ -137,8 +137,6 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
   const hasShortInterest = Array.isArray(shortInterest) && shortInterest.length > 0;
   const dtc = hasShortInterest ? shortInterest[0]?.days_to_cover : null;
   const dtcValue = typeof dtc === 'number' ? dtc : null;
-  const latestSettlement = hasShortInterest ? shortInterest[0]?.settlement_date : null;
-
   let squeeze = 'Low';
   let squeezeClass = 'short-squeeze-low';
   if (dtc >= 8) {
@@ -175,9 +173,6 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
                 <div className={`ratio-trend ${barData.signalClass}`}>
                   {barData.signal}
                 </div>
-              </div>
-              <div className="ratio-widget-value">
-                {dtcValue !== null ? dtcValue.toFixed(2) : 'N/A'}
               </div>
               {barData.ready ? (
                 <svg className="ratio-chart" width="100%" height="120" viewBox="0 0 260 120">
@@ -232,13 +227,6 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
               <div className="ratio-widget-value">
                 {dtcValue !== null ? dtcValue.toFixed(2) : 'N/A'}
               </div>
-              <div className={`short-squeeze-pill ${squeezeClass}`}>
-                {squeeze}
-              </div>
-              <div className="ratio-widget-footnote">
-                {latestSettlement ? `Settlement ${formatSettlementDate(latestSettlement)}` : 'Awaiting settlement data'}
-              </div>
-              <p className="ratio-supplement">Elevated squeeze risk once days-to-cover exceeds 8.</p>
             </div>
           </div>
         </div>
