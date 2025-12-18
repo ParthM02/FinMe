@@ -155,6 +155,68 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
 
   return (
     <div className="widget-row fundamental-sections">
+      {ratioWidgets.length > 0 && (
+        <div className="financial-ratios-section">
+          <div className="financial-ratios-header">
+            <div>
+              <div className="financial-ratios-title">Financial Ratio Trends</div>
+              <div className="financial-ratios-subtitle">Quarter-over-quarter momentum</div>
+            </div>
+          </div>
+          <div className="financial-ratios-grid">
+            {ratioWidgets.map((ratio) => (
+              <div className="ratio-widget" key={ratio.key}>
+                <div className="ratio-widget-header">
+                  <div>
+                    <div className="ratio-widget-metric">{ratio.metric}</div>
+                    <div className="ratio-widget-category">{ratio.category}</div>
+                  </div>
+                  <div className={`ratio-trend ${ratio.trendClass}`}>
+                    {ratio.trend}
+                  </div>
+                </div>
+                <div className="ratio-widget-value">
+                  {formatMetricValue(ratio.latestValue, ratio.unit)}
+                </div>
+                <svg className="ratio-chart" width="100%" height="120" viewBox="0 0 260 120">
+                  {ratio.bars.map((bar, idx) => {
+                    const x = 20 + idx * 60;
+                    const y = 100 - bar.height;
+                    return (
+                      <g key={`${ratio.key}-bar-${idx}`}>
+                        <rect
+                          x={x}
+                          y={y}
+                          width={36}
+                          height={bar.height}
+                          rx={6}
+                          className={`volume-bar-rect ${bar.barClass}`}
+                        />
+                        <text
+                          x={x + 18}
+                          y={y - 6}
+                          textAnchor="middle"
+                          className="ratio-bar-value"
+                        >
+                          {formatMetricValue(bar.value, ratio.unit)}
+                        </text>
+                        <text
+                          x={x + 18}
+                          y={110}
+                          textAnchor="middle"
+                          className="ratio-bar-label"
+                        >
+                          {bar.label}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {shortInterestSectionVisible && (
         <div className="financial-ratios-section short-interest-section">
           <div className="financial-ratios-header">
@@ -228,68 +290,6 @@ const FundamentalView = ({ shortInterest = [], financials = null }) => {
                 {dtcValue !== null ? dtcValue.toFixed(2) : 'N/A'}
               </div>
             </div>
-          </div>
-        </div>
-      )}
-      {ratioWidgets.length > 0 && (
-        <div className="financial-ratios-section">
-          <div className="financial-ratios-header">
-            <div>
-              <div className="financial-ratios-title">Financial Ratio Trends</div>
-              <div className="financial-ratios-subtitle">Quarter-over-quarter momentum</div>
-            </div>
-          </div>
-          <div className="financial-ratios-grid">
-            {ratioWidgets.map((ratio) => (
-              <div className="ratio-widget" key={ratio.key}>
-                <div className="ratio-widget-header">
-                  <div>
-                    <div className="ratio-widget-metric">{ratio.metric}</div>
-                    <div className="ratio-widget-category">{ratio.category}</div>
-                  </div>
-                  <div className={`ratio-trend ${ratio.trendClass}`}>
-                    {ratio.trend}
-                  </div>
-                </div>
-                <div className="ratio-widget-value">
-                  {formatMetricValue(ratio.latestValue, ratio.unit)}
-                </div>
-                <svg className="ratio-chart" width="100%" height="120" viewBox="0 0 260 120">
-                  {ratio.bars.map((bar, idx) => {
-                    const x = 20 + idx * 60;
-                    const y = 100 - bar.height;
-                    return (
-                      <g key={`${ratio.key}-bar-${idx}`}>
-                        <rect
-                          x={x}
-                          y={y}
-                          width={36}
-                          height={bar.height}
-                          rx={6}
-                          className={`volume-bar-rect ${bar.barClass}`}
-                        />
-                        <text
-                          x={x + 18}
-                          y={y - 6}
-                          textAnchor="middle"
-                          className="ratio-bar-value"
-                        >
-                          {formatMetricValue(bar.value, ratio.unit)}
-                        </text>
-                        <text
-                          x={x + 18}
-                          y={110}
-                          textAnchor="middle"
-                          className="ratio-bar-label"
-                        >
-                          {bar.label}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-            ))}
           </div>
         </div>
       )}
