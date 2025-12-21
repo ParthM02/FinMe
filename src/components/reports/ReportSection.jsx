@@ -14,7 +14,12 @@ const ReportSection = ({ activeTab, stockData }) => {
         />
       );
       case 'Technical': return <TechnicalView vwap={stockData.vwap} close={stockData.close} rsiValues={stockData.rsiValues} />;
-      case 'Options': return <OptionsView putCallRatio={stockData.putCallRatio} />;
+      case 'Options': return (
+        <OptionsView
+          putCallRatio={stockData.putCallRatio}
+          optionData={stockData.optionData}
+        />
+      );
       case 'Sentiment': return <SentimentView headlines={stockData.headlines} institutionalSummary={stockData.institutionalSummary} />;
       default: return null;
     }
