@@ -6,12 +6,12 @@ const Header = () => (
       <div className="logo">FinMe</div>
       <div className="header-actions">
         <button className="upgrade-button">
-          <span>✨</span><span>Upgrade</span><span>✨</span>
+          <span>✨</span><span>100% Free!</span><span>✨</span>
         </button>
         <nav className="navigation">
-          <button className="nav-button">Home</button>
+          <button className="nav-button">Home (Soon)</button>
           <button className="nav-button">Analysis</button>
-          <button className="nav-button">Guide</button>
+          <button className="nav-button">Edge (Soon)</button>
         </nav>
         <div className="user-icon">
           <svg xmlns="http://www.w3.org/2000/svg" className="icon" viewBox="0 0 20 20" fill="currentColor">
