@@ -83,22 +83,7 @@ const TechnicalView = ({ vwap, close, rsiValues = [] }) => {
     };
   }, [rsiValues]);
 
-  const cards = [];
-
-  if (hasPriceData) {
-    const bullish = close > vwap;
-    cards.push({
-      key: 'vwap',
-      metric: 'VWAP Alignment',
-      category: 'Price action',
-      trend: bullish ? 'Bullish' : 'Bearish',
-      trendClass: bullish ? trendClassMap.bullish : trendClassMap.bearish,
-      value: close.toFixed(2),
-      footnote: `VWAP ${vwap?.toFixed(2) ?? 'N/A'}`
-    });
-  }
-
-  cards.push(
+  const momentumCards = [
     {
       key: 'rsi-trend',
       metric: 'RSI Trend',
@@ -117,38 +102,76 @@ const TechnicalView = ({ vwap, close, rsiValues = [] }) => {
       category: 'Momentum Level',
       ...rsiLevelCard
     }
-  );
+  ].filter(Boolean);
 
-  const readyCards = cards.filter(Boolean);
-  if (!readyCards.length) return <span>Loading technicals...</span>;
+  const priceCard = hasPriceData
+    ? {
+        key: 'vwap',
+        metric: 'VWAP Alignment',
+        category: 'Price Action',
+        trend: close > vwap ? 'Bullish' : 'Bearish',
+        trendClass: close > vwap ? trendClassMap.bullish : trendClassMap.bearish,
+        value: close.toFixed(2),
+        footnote: `VWAP ${vwap?.toFixed(2) ?? 'N/A'}`
+      }
+    : null;
+
+  if (!momentumCards.length && !priceCard) return <span>Loading technicals...</span>;
 
   return (
     <div className="widget-row fundamental-sections">
-      <div className="financial-ratios-section">
-        <div className="financial-ratios-header">
-          <div>
-            <div className="financial-ratios-title">Technical Snapshot</div>
-            <div className="financial-ratios-subtitle">VWAP alignment & RSI signals</div>
+      {momentumCards.length > 0 && (
+        <div className="financial-ratios-section">
+          <div className="financial-ratios-header">
+            <div>
+              <div className="financial-ratios-title">Momentum</div>
+              <div className="financial-ratios-subtitle">RSI-based indicators</div>
+            </div>
+          </div>
+          <div className="financial-ratios-grid technical-grid">
+            {momentumCards.map((card) => (
+              <div className="ratio-widget" key={card.key}>
+                <div className="ratio-widget-header">
+                  <div>
+                    <div className="ratio-widget-metric">{card.metric}</div>
+                    <div className="ratio-widget-category">{card.category}</div>
+                  </div>
+                  <div className={`ratio-trend ${card.trendClass}`}>
+                    {card.trend}
+                  </div>
+                </div>
+                <div className="ratio-widget-value">{card.value}</div>
+                <div className="ratio-widget-footnote">{card.footnote}</div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="financial-ratios-grid technical-grid">
-          {readyCards.map((card) => (
-            <div className="ratio-widget" key={card.key}>
+      )}
+      {priceCard && (
+        <div className="financial-ratios-section">
+          <div className="financial-ratios-header">
+            <div>
+              <div className="financial-ratios-title">Price Action</div>
+              <div className="financial-ratios-subtitle">VWAP alignment</div>
+            </div>
+          </div>
+          <div className="financial-ratios-grid technical-grid">
+            <div className="ratio-widget" key={priceCard.key}>
               <div className="ratio-widget-header">
                 <div>
-                  <div className="ratio-widget-metric">{card.metric}</div>
-                  <div className="ratio-widget-category">{card.category}</div>
+                  <div className="ratio-widget-metric">{priceCard.metric}</div>
+                  <div className="ratio-widget-category">{priceCard.category}</div>
                 </div>
-                <div className={`ratio-trend ${card.trendClass}`}>
-                  {card.trend}
+                <div className={`ratio-trend ${priceCard.trendClass}`}>
+                  {priceCard.trend}
                 </div>
               </div>
-              <div className="ratio-widget-value">{card.value}</div>
-              <div className="ratio-widget-footnote">{card.footnote}</div>
+              <div className="ratio-widget-value">{priceCard.value}</div>
+              <div className="ratio-widget-footnote">{priceCard.footnote}</div>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
