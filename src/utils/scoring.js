@@ -1,5 +1,5 @@
 import { isUptrendByRSI, rsiCrossoverSignal, rsiOverboughtOversoldSignal } from '../technicalAnalysis';
-import { getPopularSentiment, extractFinancialRatios, buildInsiderActivityCards } from './helpers';
+import { getPopularSentiment, extractFinancialRatios, buildInsiderActivityCards, buildInstitutionalActivityCards } from './helpers';
 
 const MAX_RATIO_METRICS = 6;
 const SCORE = { bullish: 100, neutral: 50, bearish: 0 };
@@ -16,12 +16,6 @@ const scoreFromDtcValue = (dtc) => {
   if (dtc >= 8) return SCORE.bullish;
   if (dtc >= 3) return SCORE.neutral;
   return SCORE.bearish;
-};
-
-const parseInstitutionalNumber = (value) => {
-  if (value == null) return null;
-  const parsed = parseInt(String(value).replace(/,/g, ''), 10);
-  return Number.isFinite(parsed) ? parsed : null;
 };
 
 export const calculateAllScores = ({
@@ -86,16 +80,11 @@ export const calculateAllScores = ({
     else sentimentComponents.push(SCORE.neutral);
   }
 
-  if (institutionalSummary) {
-    const incInst = parseInstitutionalNumber(institutionalSummary.increasedInstitutions);
-    const decInst = parseInstitutionalNumber(institutionalSummary.decreasedInstitutions);
-    if (incInst !== null && decInst !== null) {
-      let instScore = SCORE.neutral;
-      if (incInst > decInst) instScore = SCORE.bullish;
-      else if (incInst < decInst) instScore = SCORE.bearish;
-      sentimentComponents.push(instScore);
-    }
-  }
+  buildInstitutionalActivityCards(institutionalSummary).forEach((card) => {
+    if (!card.signalState) return;
+    const score = SCORE[card.signalState];
+    if (typeof score === 'number') sentimentComponents.push(score);
+  });
 
   buildInsiderActivityCards(insiderActivity).forEach((card) => {
     if (!card.hasData || !card.signalState) return;

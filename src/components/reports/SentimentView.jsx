@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { formatDate, getPopularSentiment, buildInsiderActivityCards } from '../../utils/helpers';
+import { formatDate, getPopularSentiment, buildInsiderActivityCards, buildInstitutionalActivityCards } from '../../utils/helpers';
 
 const SentimentView = ({ headlines = [], institutionalSummary, insiderActivity }) => {
   const [expanded, setExpanded] = useState(false);
@@ -30,51 +30,8 @@ const SentimentView = ({ headlines = [], institutionalSummary, insiderActivity }
     );
   }, [headlines]);
 
-  const parseNumeric = (value) => {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      const sanitized = value.replace(/[,$]/g, '').replace(/%/g, '').trim();
-      if (!sanitized) return 0;
-      const isNegative = sanitized.startsWith('(') && sanitized.endsWith(')');
-      const normalized = sanitized.replace(/[()]/g, '');
-      const parsed = parseFloat(normalized);
-      if (Number.isNaN(parsed)) return 0;
-      return isNegative ? -parsed : parsed;
-    }
-    return 0;
-  };
-
   const insiderCards = useMemo(() => buildInsiderActivityCards(insiderActivity), [insiderActivity]);
-
-  const institutionalCards = [
-    {
-      key: 'inst-counts',
-      metric: '# Institutional Position',
-      category: 'Participation',
-      increasedLabel: 'Increased',
-      increasedKey: 'increasedInstitutions',
-      decreasedLabel: 'Decreased',
-      decreasedKey: 'decreasedInstitutions'
-    },
-    {
-      key: 'inst-shares',
-      metric: 'Institutional Share Volume',
-      category: 'Shares traded',
-      increasedLabel: 'Increased',
-      increasedKey: 'increasedShares',
-      decreasedLabel: 'Decreased',
-      decreasedKey: 'decreasedShares'
-    },
-    {
-      key: 'inst-new',
-      metric: 'New vs Sold Out',
-      category: 'Position changes',
-      increasedLabel: 'New Positions',
-      increasedKey: 'newInstitutions',
-      decreasedLabel: 'Sold Out',
-      decreasedKey: 'soldOutInstitutions'
-    }
-  ];
+  const institutionalCards = useMemo(() => buildInstitutionalActivityCards(institutionalSummary), [institutionalSummary]);
 
   return (
     <div className="widget-row fundamental-sections sentiment-sections">
@@ -181,41 +138,39 @@ const SentimentView = ({ headlines = [], institutionalSummary, insiderActivity }
           </div>
         </div>
         <div className="financial-ratios-grid sentiment-grid">
-          {institutionalCards.map((card) => {
-            const increasedValue = parseNumeric(institutionalSummary?.[card.increasedKey]);
-            const decreasedValue = parseNumeric(institutionalSummary?.[card.decreasedKey]);
-            const hasData = !!institutionalSummary;
-            const signalBullish = increasedValue > decreasedValue;
-            const signalClass = signalBullish ? 'bullish' : 'bearish';
-            const signalLabel = signalBullish ? 'Bullish' : 'Bearish';
-            return (
+          {institutionalCards.length === 0 ? (
+            <div className="ratio-widget">
+              <div className="ratio-loading">Loading institutional data...</div>
+            </div>
+          ) : (
+            institutionalCards.map((card) => (
               <div className="ratio-widget" key={card.key}>
                 <div className="ratio-widget-header">
                   <div>
                     <div className="ratio-widget-metric">{card.metric}</div>
                     <div className="ratio-widget-category">{card.category}</div>
                   </div>
-                  <div className={`ratio-trend ${hasData ? signalClass : 'neutral'}`}>
-                    {hasData ? signalLabel : 'Loading'}
+                  <div className={`ratio-trend ${card.signalClass}`}>
+                    {card.signalLabel}
                   </div>
                 </div>
-                {hasData ? (
+                {card.hasData ? (
                   <div className="institutional-metrics">
                     <div className="institutional-metric">
                       <span>{card.increasedLabel}</span>
-                      <strong>{institutionalSummary?.[card.increasedKey] ?? 'N/A'}</strong>
+                      <strong>{card.increasedValue}</strong>
                     </div>
                     <div className="institutional-metric">
                       <span>{card.decreasedLabel}</span>
-                      <strong>{institutionalSummary?.[card.decreasedKey] ?? 'N/A'}</strong>
+                      <strong>{card.decreasedValue}</strong>
                     </div>
                   </div>
                 ) : (
                   <div className="ratio-loading">Loading institutional data...</div>
                 )}
               </div>
-            );
-          })}
+            ))
+          )}
         </div>
       </div>
 

@@ -87,7 +87,7 @@ export const getPopularSentiment = (headlines) => {
   return { sentiment: 'neutral', count: counts.neutral };
 };
 
-const parseInsiderNumeric = (value) => {
+const parseDisplayNumber = (value) => {
   if (typeof value === 'number') return value;
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -163,8 +163,8 @@ export const buildInsiderActivityCards = (insiderActivity) => {
     const buyRaw = findValue(cfg.rows, cfg.buyLabel, cfg.period);
     const sellRaw = findValue(cfg.rows, cfg.sellLabel, cfg.period);
     const hasData = buyRaw !== null && sellRaw !== null && buyRaw !== '' && sellRaw !== '';
-    const buyNumeric = hasData ? parseInsiderNumeric(buyRaw) : null;
-    const sellNumeric = hasData ? parseInsiderNumeric(sellRaw) : null;
+    const buyNumeric = hasData ? parseDisplayNumber(buyRaw) : null;
+    const sellNumeric = hasData ? parseDisplayNumber(sellRaw) : null;
 
     let signalState = 'neutral';
     let signalLabel = 'Balanced';
@@ -192,6 +192,83 @@ export const buildInsiderActivityCards = (insiderActivity) => {
       signalState: hasData ? signalState : null,
       signalClass: hasData ? signalState : 'neutral',
       signalLabel
+    };
+  });
+};
+
+export const buildInstitutionalActivityCards = (institutionalSummary) => {
+  if (!institutionalSummary) return [];
+
+  const configs = [
+    {
+      key: 'inst-counts',
+      metric: '# Institutional Position',
+      category: 'Participation',
+      increasedLabel: 'Increased',
+      increasedKey: 'increasedInstitutions',
+      decreasedLabel: 'Decreased',
+      decreasedKey: 'decreasedInstitutions'
+    },
+    {
+      key: 'inst-shares',
+      metric: 'Institutional Share Volume',
+      category: 'Shares traded',
+      increasedLabel: 'Increased',
+      increasedKey: 'increasedShares',
+      decreasedLabel: 'Decreased',
+      decreasedKey: 'decreasedShares'
+    },
+    {
+      key: 'inst-new',
+      metric: 'New vs Sold Out',
+      category: 'Position changes',
+      increasedLabel: 'New Positions',
+      increasedKey: 'newInstitutions',
+      decreasedLabel: 'Sold Out',
+      decreasedKey: 'soldOutInstitutions'
+    }
+  ];
+
+  return configs.map((cfg) => {
+    const increasedRaw = institutionalSummary?.[cfg.increasedKey];
+    const decreasedRaw = institutionalSummary?.[cfg.decreasedKey];
+    const increasedValue = increasedRaw ?? 'N/A';
+    const decreasedValue = decreasedRaw ?? 'N/A';
+    const increasedNumeric = parseDisplayNumber(increasedRaw);
+    const decreasedNumeric = parseDisplayNumber(decreasedRaw);
+    const hasData = increasedNumeric !== null && decreasedNumeric !== null;
+
+    let signalState = null;
+    let signalLabel = 'Loading';
+    let signalClass = 'neutral';
+
+    if (hasData) {
+      signalState = 'neutral';
+      signalLabel = 'Balanced';
+      signalClass = 'neutral';
+      if (increasedNumeric > decreasedNumeric) {
+        signalState = 'bullish';
+        signalLabel = 'Bullish';
+        signalClass = 'bullish';
+      } else if (increasedNumeric < decreasedNumeric) {
+        signalState = 'bearish';
+        signalLabel = 'Bearish';
+        signalClass = 'bearish';
+      }
+    }
+
+    return {
+      key: cfg.key,
+      metric: cfg.metric,
+      category: cfg.category,
+      increasedLabel: cfg.increasedLabel,
+      decreasedLabel: cfg.decreasedLabel,
+      increasedValue,
+      decreasedValue,
+      hasData,
+      signalState,
+      signalLabel,
+      signalClass
     };
   });
 };
