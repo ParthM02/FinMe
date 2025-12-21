@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { formatDate, getPopularSentiment } from '../../utils/helpers';
+import { formatDate, getPopularSentiment, buildInsiderActivityCards } from '../../utils/helpers';
 
 const SentimentView = ({ headlines = [], institutionalSummary, insiderActivity }) => {
   const [expanded, setExpanded] = useState(false);
@@ -44,94 +44,7 @@ const SentimentView = ({ headlines = [], institutionalSummary, insiderActivity }
     return 0;
   };
 
-  const insiderCards = useMemo(() => {
-    const data = insiderActivity?.data;
-    if (!data) return [];
-
-    const tradeRows = data.numberOfTrades?.rows || [];
-    const shareRows = data.numberOfSharesTraded?.rows || [];
-
-    const getValue = (rows, label, period) => {
-      const target = rows.find((row) => row.insiderTrade === label);
-      return target?.[period] ?? null;
-    };
-
-    const buildCard = ({ key, metric, category, rows, period, buyLabel, sellLabel, buyDisplay = 'Buys', sellDisplay = 'Sells' }) => {
-      const buyRaw = getValue(rows, buyLabel, period);
-      const sellRaw = getValue(rows, sellLabel, period);
-      const hasData = buyRaw != null && sellRaw != null;
-      const buyNumeric = hasData ? parseNumeric(buyRaw) : 0;
-      const sellNumeric = hasData ? parseNumeric(sellRaw) : 0;
-
-      let signalLabel = 'Balanced';
-      let signalClass = 'neutral';
-      if (!hasData) {
-        signalLabel = 'Loading';
-      } else if (buyNumeric > sellNumeric) {
-        signalLabel = 'Bullish';
-        signalClass = 'bullish';
-      } else if (buyNumeric < sellNumeric) {
-        signalLabel = 'Bearish';
-        signalClass = 'bearish';
-      }
-
-      return {
-        key,
-        metric,
-        category,
-        buyDisplay,
-        sellDisplay,
-        buyValue: buyRaw ?? 'N/A',
-        sellValue: sellRaw ?? 'N/A',
-        signalLabel,
-        signalClass,
-        hasData
-      };
-    };
-
-    return [
-      buildCard({
-        key: 'trades-3m',
-        metric: 'Trade Mix · 3M',
-        category: 'Open market flow',
-        rows: tradeRows,
-        period: 'months3',
-        buyLabel: 'Number of Open Market Buys',
-        sellLabel: 'Number of Sells'
-      }),
-      buildCard({
-        key: 'trades-12m',
-        metric: 'Trade Mix · 12M',
-        category: 'Open market flow',
-        rows: tradeRows,
-        period: 'months12',
-        buyLabel: 'Number of Open Market Buys',
-        sellLabel: 'Number of Sells'
-      }),
-      buildCard({
-        key: 'shares-3m',
-        metric: 'Shares Mix · 3M',
-        category: 'Shares bought vs sold',
-        rows: shareRows,
-        period: 'months3',
-        buyLabel: 'Number of Shares Bought',
-        sellLabel: 'Number of Shares Sold',
-        buyDisplay: 'Bought',
-        sellDisplay: 'Sold'
-      }),
-      buildCard({
-        key: 'shares-12m',
-        metric: 'Shares Mix · 12M',
-        category: 'Shares bought vs sold',
-        rows: shareRows,
-        period: 'months12',
-        buyLabel: 'Number of Shares Bought',
-        sellLabel: 'Number of Shares Sold',
-        buyDisplay: 'Bought',
-        sellDisplay: 'Sold'
-      })
-    ];
-  }, [insiderActivity]);
+  const insiderCards = useMemo(() => buildInsiderActivityCards(insiderActivity), [insiderActivity]);
 
   const institutionalCards = [
     {

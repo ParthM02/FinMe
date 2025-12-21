@@ -86,3 +86,112 @@ export const getPopularSentiment = (headlines) => {
   if (max === counts.negative) return { sentiment: 'negative', count: counts.negative };
   return { sentiment: 'neutral', count: counts.neutral };
 };
+
+const parseInsiderNumeric = (value) => {
+  if (typeof value === 'number') return value;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === '--') return null;
+  const isNegative = trimmed.startsWith('(') && trimmed.endsWith(')');
+  const cleaned = trimmed.replace(/[(),]/g, '').replace(/[$%]/g, '');
+  if (!cleaned) return null;
+  const parsed = Number(cleaned);
+  if (!Number.isFinite(parsed)) return null;
+  return isNegative ? -parsed : parsed;
+};
+
+export const buildInsiderActivityCards = (insiderActivity) => {
+  const data = insiderActivity?.data;
+  if (!data) return [];
+
+  const tradeRows = data.numberOfTrades?.rows || [];
+  const shareRows = data.numberOfSharesTraded?.rows || [];
+
+  const findValue = (rows, label, period) => {
+    const row = rows.find((item) => item.insiderTrade === label);
+    return row ? row[period] ?? null : null;
+  };
+
+  const configs = [
+    {
+      key: 'trades-3m',
+      metric: 'Trade Mix · 3M',
+      category: 'Open market flow',
+      rows: tradeRows,
+      period: 'months3',
+      buyLabel: 'Number of Open Market Buys',
+      sellLabel: 'Number of Sells',
+      buyDisplay: 'Buys',
+      sellDisplay: 'Sells'
+    },
+    {
+      key: 'trades-12m',
+      metric: 'Trade Mix · 12M',
+      category: 'Open market flow',
+      rows: tradeRows,
+      period: 'months12',
+      buyLabel: 'Number of Open Market Buys',
+      sellLabel: 'Number of Sells',
+      buyDisplay: 'Buys',
+      sellDisplay: 'Sells'
+    },
+    {
+      key: 'shares-3m',
+      metric: 'Shares Mix · 3M',
+      category: 'Shares bought vs sold',
+      rows: shareRows,
+      period: 'months3',
+      buyLabel: 'Number of Shares Bought',
+      sellLabel: 'Number of Shares Sold',
+      buyDisplay: 'Bought',
+      sellDisplay: 'Sold'
+    },
+    {
+      key: 'shares-12m',
+      metric: 'Shares Mix · 12M',
+      category: 'Shares bought vs sold',
+      rows: shareRows,
+      period: 'months12',
+      buyLabel: 'Number of Shares Bought',
+      sellLabel: 'Number of Shares Sold',
+      buyDisplay: 'Bought',
+      sellDisplay: 'Sold'
+    }
+  ];
+
+  return configs.map((cfg) => {
+    const buyRaw = findValue(cfg.rows, cfg.buyLabel, cfg.period);
+    const sellRaw = findValue(cfg.rows, cfg.sellLabel, cfg.period);
+    const hasData = buyRaw !== null && sellRaw !== null && buyRaw !== '' && sellRaw !== '';
+    const buyNumeric = hasData ? parseInsiderNumeric(buyRaw) : null;
+    const sellNumeric = hasData ? parseInsiderNumeric(sellRaw) : null;
+
+    let signalState = 'neutral';
+    let signalLabel = 'Balanced';
+
+    if (!hasData) {
+      signalLabel = 'Loading';
+      signalState = 'neutral';
+    } else if (buyNumeric > sellNumeric) {
+      signalState = 'bullish';
+      signalLabel = 'Bullish';
+    } else if (buyNumeric < sellNumeric) {
+      signalState = 'bearish';
+      signalLabel = 'Bearish';
+    }
+
+    return {
+      key: cfg.key,
+      metric: cfg.metric,
+      category: cfg.category,
+      buyDisplay: cfg.buyDisplay,
+      sellDisplay: cfg.sellDisplay,
+      buyValue: buyRaw ?? 'N/A',
+      sellValue: sellRaw ?? 'N/A',
+      hasData,
+      signalState: hasData ? signalState : null,
+      signalClass: hasData ? signalState : 'neutral',
+      signalLabel
+    };
+  });
+};

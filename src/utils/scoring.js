@@ -1,5 +1,5 @@
 import { isUptrendByRSI, rsiCrossoverSignal, rsiOverboughtOversoldSignal } from '../technicalAnalysis';
-import { getPopularSentiment, extractFinancialRatios } from './helpers';
+import { getPopularSentiment, extractFinancialRatios, buildInsiderActivityCards } from './helpers';
 
 const MAX_RATIO_METRICS = 6;
 const SCORE = { bullish: 100, neutral: 50, bearish: 0 };
@@ -18,6 +18,12 @@ const scoreFromDtcValue = (dtc) => {
   return SCORE.bearish;
 };
 
+const parseInstitutionalNumber = (value) => {
+  if (value == null) return null;
+  const parsed = parseInt(String(value).replace(/,/g, ''), 10);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 export const calculateAllScores = ({
   shortInterest,
   vwap,
@@ -26,7 +32,8 @@ export const calculateAllScores = ({
   putCallRatio,
   headlines,
   institutionalSummary,
-  financials
+  financials,
+  insiderActivity
 }) => {
   const scores = { Fundamental: null, Technical: null, Options: null, Sentiment: null };
   const fundamentalComponents = [];
@@ -70,12 +77,35 @@ export const calculateAllScores = ({
   if (putCallRatio !== null) scores.Options = putCallRatio > 1 ? 0 : 100;
 
   // Sentiment Score
-  if (headlines?.length > 0 && institutionalSummary) {
+  const sentimentComponents = [];
+
+  if (headlines?.length > 0) {
     const { sentiment } = getPopularSentiment(headlines);
-    let newsScore = sentiment === 'positive' ? 100 : (sentiment === 'negative' ? 0 : 50);
-    const incInst = parseInt(institutionalSummary.increasedInstitutions?.replace(/,/g, '') || 0);
-    const decInst = parseInt(institutionalSummary.decreasedInstitutions?.replace(/,/g, '') || 0);
-    scores.Sentiment = Math.round((newsScore + (incInst > decInst ? 100 : 0)) / 2); // Simplified for brevity
+    if (sentiment === 'positive') sentimentComponents.push(SCORE.bullish);
+    else if (sentiment === 'negative') sentimentComponents.push(SCORE.bearish);
+    else sentimentComponents.push(SCORE.neutral);
+  }
+
+  if (institutionalSummary) {
+    const incInst = parseInstitutionalNumber(institutionalSummary.increasedInstitutions);
+    const decInst = parseInstitutionalNumber(institutionalSummary.decreasedInstitutions);
+    if (incInst !== null && decInst !== null) {
+      let instScore = SCORE.neutral;
+      if (incInst > decInst) instScore = SCORE.bullish;
+      else if (incInst < decInst) instScore = SCORE.bearish;
+      sentimentComponents.push(instScore);
+    }
+  }
+
+  buildInsiderActivityCards(insiderActivity).forEach((card) => {
+    if (!card.hasData || !card.signalState) return;
+    const score = SCORE[card.signalState];
+    if (typeof score === 'number') sentimentComponents.push(score);
+  });
+
+  if (sentimentComponents.length) {
+    const total = sentimentComponents.reduce((sum, score) => sum + score, 0);
+    scores.Sentiment = Math.round(total / sentimentComponents.length);
   }
 
   return scores;
