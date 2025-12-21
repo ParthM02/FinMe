@@ -10,7 +10,8 @@ export const useStockData = (searchTicker, useTestData) => {
     rsiValues: [],
     optionData: null,
     putCallRatio: null,
-    financials: null
+    financials: null,
+    insiderActivity: null
   });
 
   useEffect(() => {
@@ -28,7 +29,8 @@ export const useStockData = (searchTicker, useTestData) => {
           institutionalSummary: d.institutionalSummary || null,
           shortInterest: d.shortInterest || [],
           rsiValues: d.rsiValues || [],
-          financials: d.financials || null
+          financials: d.financials || null,
+          insiderActivity: d.insiderActivity || null
         }));
       } catch (e) { console.error(e); }
     };

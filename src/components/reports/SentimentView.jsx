@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { formatDate, getPopularSentiment } from '../../utils/helpers';
 
-const SentimentView = ({ headlines = [], institutionalSummary }) => {
+const SentimentView = ({ headlines = [], institutionalSummary, insiderActivity }) => {
   const [expanded, setExpanded] = useState(false);
   const { sentiment, count } = useMemo(() => getPopularSentiment(headlines), [headlines]);
 
@@ -32,9 +32,106 @@ const SentimentView = ({ headlines = [], institutionalSummary }) => {
 
   const parseNumeric = (value) => {
     if (typeof value === 'number') return value;
-    if (typeof value === 'string') return parseInt(value.replace(/,/g, '') || 0, 10);
+    if (typeof value === 'string') {
+      const sanitized = value.replace(/[,$]/g, '').replace(/%/g, '').trim();
+      if (!sanitized) return 0;
+      const isNegative = sanitized.startsWith('(') && sanitized.endsWith(')');
+      const normalized = sanitized.replace(/[()]/g, '');
+      const parsed = parseFloat(normalized);
+      if (Number.isNaN(parsed)) return 0;
+      return isNegative ? -parsed : parsed;
+    }
     return 0;
   };
+
+  const insiderCards = useMemo(() => {
+    const data = insiderActivity?.data;
+    if (!data) return [];
+
+    const tradeRows = data.numberOfTrades?.rows || [];
+    const shareRows = data.numberOfSharesTraded?.rows || [];
+
+    const getValue = (rows, label, period) => {
+      const target = rows.find((row) => row.insiderTrade === label);
+      return target?.[period] ?? null;
+    };
+
+    const buildCard = ({ key, metric, category, rows, period, buyLabel, sellLabel, buyDisplay = 'Buys', sellDisplay = 'Sells' }) => {
+      const buyRaw = getValue(rows, buyLabel, period);
+      const sellRaw = getValue(rows, sellLabel, period);
+      const hasData = buyRaw != null && sellRaw != null;
+      const buyNumeric = hasData ? parseNumeric(buyRaw) : 0;
+      const sellNumeric = hasData ? parseNumeric(sellRaw) : 0;
+
+      let signalLabel = 'Balanced';
+      let signalClass = 'neutral';
+      if (!hasData) {
+        signalLabel = 'Loading';
+      } else if (buyNumeric > sellNumeric) {
+        signalLabel = 'Bullish';
+        signalClass = 'bullish';
+      } else if (buyNumeric < sellNumeric) {
+        signalLabel = 'Bearish';
+        signalClass = 'bearish';
+      }
+
+      return {
+        key,
+        metric,
+        category,
+        buyDisplay,
+        sellDisplay,
+        buyValue: buyRaw ?? 'N/A',
+        sellValue: sellRaw ?? 'N/A',
+        signalLabel,
+        signalClass,
+        hasData
+      };
+    };
+
+    return [
+      buildCard({
+        key: 'trades-3m',
+        metric: 'Trade Mix · 3M',
+        category: 'Open market flow',
+        rows: tradeRows,
+        period: 'months3',
+        buyLabel: 'Number of Open Market Buys',
+        sellLabel: 'Number of Sells'
+      }),
+      buildCard({
+        key: 'trades-12m',
+        metric: 'Trade Mix · 12M',
+        category: 'Open market flow',
+        rows: tradeRows,
+        period: 'months12',
+        buyLabel: 'Number of Open Market Buys',
+        sellLabel: 'Number of Sells'
+      }),
+      buildCard({
+        key: 'shares-3m',
+        metric: 'Shares Mix · 3M',
+        category: 'Shares bought vs sold',
+        rows: shareRows,
+        period: 'months3',
+        buyLabel: 'Number of Shares Bought',
+        sellLabel: 'Number of Shares Sold',
+        buyDisplay: 'Bought',
+        sellDisplay: 'Sold'
+      }),
+      buildCard({
+        key: 'shares-12m',
+        metric: 'Shares Mix · 12M',
+        category: 'Shares bought vs sold',
+        rows: shareRows,
+        period: 'months12',
+        buyLabel: 'Number of Shares Bought',
+        sellLabel: 'Number of Shares Sold',
+        buyDisplay: 'Bought',
+        sellDisplay: 'Sold'
+      })
+    ];
+  }, [insiderActivity]);
 
   const institutionalCards = [
     {
@@ -206,6 +303,50 @@ const SentimentView = ({ headlines = [], institutionalSummary }) => {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      <div className="financial-ratios-section">
+        <div className="financial-ratios-header">
+          <div>
+            <div className="financial-ratios-title">Insider Activity</div>
+            <div className="financial-ratios-subtitle">Buys vs sells overview</div>
+          </div>
+        </div>
+        <div className="financial-ratios-grid sentiment-grid">
+          {insiderCards.length === 0 ? (
+            <div className="ratio-widget">
+              <div className="ratio-loading">Loading insider trades...</div>
+            </div>
+          ) : (
+            insiderCards.map((card) => (
+              <div className="ratio-widget" key={card.key}>
+                <div className="ratio-widget-header">
+                  <div>
+                    <div className="ratio-widget-metric">{card.metric}</div>
+                    <div className="ratio-widget-category">{card.category}</div>
+                  </div>
+                  <div className={`ratio-trend ${card.signalClass}`}>
+                    {card.signalLabel}
+                  </div>
+                </div>
+                {card.hasData ? (
+                  <div className="institutional-metrics">
+                    <div className="institutional-metric">
+                      <span>{card.buyDisplay}</span>
+                      <strong>{card.buyValue}</strong>
+                    </div>
+                    <div className="institutional-metric">
+                      <span>{card.sellDisplay}</span>
+                      <strong>{card.sellValue}</strong>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="ratio-loading">Loading insider trades...</div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

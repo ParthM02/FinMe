@@ -20,7 +20,13 @@ const ReportSection = ({ activeTab, stockData }) => {
           optionData={stockData.optionData}
         />
       );
-      case 'Sentiment': return <SentimentView headlines={stockData.headlines} institutionalSummary={stockData.institutionalSummary} />;
+      case 'Sentiment': return (
+        <SentimentView
+          headlines={stockData.headlines}
+          institutionalSummary={stockData.institutionalSummary}
+          insiderActivity={stockData.insiderActivity}
+        />
+      );
       default: return null;
     }
   };

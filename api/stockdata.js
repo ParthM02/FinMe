@@ -1,6 +1,10 @@
 export default async function handler(req, res) {
   const { ticker } = req.query;
   const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
+  const NASDAQ_HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    Accept: "application/json"
+  };
 
   if (!ticker) {
     return res.status(400).json({ error: 'Ticker is required.' });
@@ -49,12 +53,7 @@ export default async function handler(req, res) {
 
     //  Institutional holdings API
     const holdingsUrl = `https://api.nasdaq.com/api/company/${ticker.toUpperCase()}/institutional-holdings?limit=10&type=TOTAL&sortColumn=marketValue`;
-    const holdingsResponse = await fetch(holdingsUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 ",
-        "Accept": "application/json"
-      }
-    });
+    const holdingsResponse = await fetch(holdingsUrl, { headers: NASDAQ_HEADERS });
     if (!holdingsResponse.ok) {
       throw new Error("Failed to fetch institutional holdings");
     }
@@ -80,12 +79,7 @@ export default async function handler(req, res) {
     let financials = null;
     try {
       const financialsUrl = `https://api.nasdaq.com/api/company/${ticker.toUpperCase()}/financials?frequency=2`;
-      const financialsResponse = await fetch(financialsUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 ",
-          "Accept": "application/json"
-        }
-      });
+      const financialsResponse = await fetch(financialsUrl, { headers: NASDAQ_HEADERS });
 
       if (!financialsResponse.ok) {
         throw new Error('Failed to fetch financials');
@@ -96,6 +90,19 @@ export default async function handler(req, res) {
       console.error('Unable to load financials', financialError);
     }
 
+    // Insider trading activity (keep raw payload)
+    let insiderActivity = null;
+    try {
+      const insiderUrl = `https://api.nasdaq.com/api/company/${ticker.toUpperCase()}/insider-trades?limit=10&type=all&sortColumn=lastDate&sortOrder=DESC`;
+      const insiderResponse = await fetch(insiderUrl, { headers: NASDAQ_HEADERS });
+      if (!insiderResponse.ok) {
+        throw new Error('Failed to fetch insider trades');
+      }
+      insiderActivity = await insiderResponse.json();
+    } catch (insiderError) {
+      console.error('Unable to load insider trades', insiderError);
+    }
+
     res.status(200).json({
       previousClose,
       vwap,
@@ -104,7 +111,8 @@ export default async function handler(req, res) {
       headlines,
       shortInterest,
       institutionalSummary,
-      financials
+      financials,
+      insiderActivity
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
