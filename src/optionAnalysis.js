@@ -105,6 +105,130 @@ export function bsGreeks(S, K, T, r, q, sigma, optionType = 'call') {
 
 }
 
+function parseNumeric(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
+function midPrice(row, optionType) {
+    if (!row) return null;
+    const bid = parseNumeric(optionType === 'call' ? row.c_Bid : row.p_Bid);
+    const ask = parseNumeric(optionType === 'call' ? row.c_Ask : row.p_Ask);
+    const last = parseNumeric(optionType === 'call' ? row.c_Last : row.p_Last);
+
+    if (bid !== null && ask !== null && ask >= bid) {
+        return (bid + ask) / 2;
+    }
+    if (last !== null) return last;
+    if (bid !== null) return bid;
+    if (ask !== null) return ask;
+    return null;
+}
+
+function parseExpiryDateFromRows(rows) {
+    const withGroup = (rows || []).find((row) => typeof row.expirygroup === 'string' && row.expirygroup.trim());
+    if (!withGroup) return null;
+    const parsed = Date.parse(withGroup.expirygroup);
+    if (Number.isNaN(parsed)) return null;
+    return new Date(parsed);
+}
+
+function getTimeToExpiryYears(rows) {
+    const expiry = parseExpiryDateFromRows(rows);
+    if (!expiry) return null;
+    const now = new Date();
+    const diffMs = expiry.getTime() - now.getTime();
+    if (diffMs <= 0) return null;
+    const msInYear = 365 * 24 * 60 * 60 * 1000;
+    return diffMs / msInYear;
+}
+
+export function computeRowDelta(row, S, rows, optionType = 'call', r = 0.05, q = 0) {
+    const K = parseNumeric(row?.strike);
+    if (!row || !K || !S) return null;
+    const T = getTimeToExpiryYears(rows);
+    if (!T) return null;
+    const marketPrice = midPrice(row, optionType);
+    if (!marketPrice || marketPrice <= 0) return null;
+
+    const iv = getImpliedVolatility({
+        S,
+        K,
+        T,
+        r,
+        q,
+        marketPrice,
+        optionType
+    });
+
+    if (iv === null) return null;
+    const greeks = bsGreeks(S, K, T, r, q, iv, optionType);
+    const delta = greeks?.delta;
+    return Number.isFinite(delta) ? Math.abs(delta) : null;
+}
+
+export function buildDeltaAsymmetry(optionRows, spotPrice, otmDistance = 10) {
+    if (!spotPrice || !Array.isArray(optionRows)) {
+        return { status: 'unavailable' };
+    }
+
+    const findClosestRow = (targetStrike) => {
+        return optionRows.reduce((best, row) => {
+            const strike = parseNumeric(row?.strike);
+            if (strike === null) return best;
+            const diff = Math.abs(strike - targetStrike);
+            if (diff < best.diff) {
+                return { diff, row };
+            }
+            return best;
+        }, { diff: Infinity, row: null }).row;
+    };
+
+    const callRow = findClosestRow(spotPrice + otmDistance);
+    const putRow = findClosestRow(spotPrice - otmDistance);
+
+    const callDelta = computeRowDelta(callRow, spotPrice, optionRows, 'call');
+    const putDelta = computeRowDelta(putRow, spotPrice, optionRows, 'put');
+
+    if (callDelta === null || putDelta === null) {
+        return {
+            status: 'pending',
+            callDelta,
+            putDelta,
+            strikes: {
+                call: parseNumeric(callRow?.strike),
+                put: parseNumeric(putRow?.strike)
+            },
+            otmDistance
+        };
+    }
+
+    const tolerance = 0.05;
+    let signal = 'Neutral';
+    let signalClass = 'neutral';
+    if (callDelta - putDelta > tolerance) {
+        signal = 'Bullish';
+        signalClass = 'bullish';
+    } else if (putDelta - callDelta > tolerance) {
+        signal = 'Bearish';
+        signalClass = 'bearish';
+    }
+
+    return {
+        status: 'ready',
+        signal,
+        signalClass,
+        callDelta,
+        putDelta,
+        strikes: {
+            call: parseNumeric(callRow?.strike),
+            put: parseNumeric(putRow?.strike)
+        },
+        otmDistance,
+        timeToExpiry: getTimeToExpiryYears(optionRows)
+    };
+}
+
 function intrinsicValue(S, K, optionType = 'call') {
     if (optionType === 'call') {
         return Math.max(S - K, 0);

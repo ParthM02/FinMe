@@ -819,6 +819,11 @@ body {
   background: #ef4444;
 }
 
+.options-delta-chart {
+  height: 160px;
+  margin-top: 0.75rem;
+}
+
 .sentiment-toggle {
   background: rgba(168, 85, 247, 0.15);
   color: #a855f7;

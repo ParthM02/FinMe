@@ -18,6 +18,7 @@ const ReportSection = ({ activeTab, stockData }) => {
         <OptionsView
           putCallRatio={stockData.putCallRatio}
           optionData={stockData.optionData}
+          underlyingPrice={stockData.close}
         />
       );
       case 'Sentiment': return (

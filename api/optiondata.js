@@ -7,7 +7,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      `https://api.nasdaq.com/api/quote/${symbol}/option-chain?assetclass=stocks`,
+      `https://api.nasdaq.com/api/quote/${symbol}/option-chain?assetclass=stocks&limit=60&fromdate=all&todate=undefined&excode=oprac&callput=callput&money=at&type=all`,
       {
         headers: {
           "User-Agent":
