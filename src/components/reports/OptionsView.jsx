@@ -325,7 +325,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
           <div className="ratio-widget">
             <div className="ratio-widget-header">
               <div>
-                <div className="ratio-widget-metric">Forecast (Nearest)</div>
+                <div className="ratio-widget-metric">Midpoint/Premium Method (Nearest)</div>
                 <div className="ratio-widget-category">Nearest expiration {nearestLabel}</div>
               </div>
               <div className={`ratio-trend ${premiumForecastNear.biasClass || 'neutral'}`}>
@@ -379,7 +379,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
           <div className="ratio-widget">
             <div className="ratio-widget-header">
               <div>
-                <div className="ratio-widget-metric">Forecast (Furthest)</div>
+                <div className="ratio-widget-metric">Midpoint/Premium Method (Furthest)</div>
                 <div className="ratio-widget-category">Furthest expiration {furthestLabel}</div>
               </div>
               <div className={`ratio-trend ${premiumForecastFar.biasClass || 'neutral'}`}>
