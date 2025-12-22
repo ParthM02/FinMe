@@ -10,7 +10,7 @@ import {
   Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { buildDeltaAsymmetry, buildPremiumSkew, getNearestExpiryGroup, getFurthestExpiryGroup, formatExpiryLabel } from '../../optionAnalysis';
+import { buildDeltaAsymmetry, buildPremiumSkew, buildPremiumForecast, getNearestExpiryGroup, getFurthestExpiryGroup, formatExpiryLabel } from '../../optionAnalysis';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -114,6 +114,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
 
   const premiumSkewNear = useMemo(() => buildPremiumSkew(nearestRows, spot, 10), [nearestRows, spot]);
   const premiumSkewFar = useMemo(() => buildPremiumSkew(furthestRows, spot, 10), [furthestRows, spot]);
+
+  const premiumForecastNear = useMemo(() => buildPremiumForecast(nearestRows, spot, 10), [nearestRows, spot]);
+  const premiumForecastFar = useMemo(() => buildPremiumForecast(furthestRows, spot, 10), [furthestRows, spot]);
 
   const buildConeChart = (asymmetry) => {
     if (!spot || !asymmetry || asymmetry.status === 'unavailable') return null;
@@ -421,6 +424,68 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
               {spot
                 ? `Furthest expiry ±${premiumSkewFar.otmDistance || 10} around $${spot.toFixed(2)} | Strikes ${premiumSkewFar.strikes?.put ?? '—'} / ${premiumSkewFar.strikes?.call ?? '—'}`
                 : 'Waiting for price'}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="financial-ratios-section">
+        <div className="financial-ratios-header">
+          <div>
+            <div className="financial-ratios-title">Market Forecast (Premium)</div>
+            <div className="financial-ratios-subtitle">Width, bias, and target by expiry</div>
+          </div>
+        </div>
+        <div className="financial-ratios-grid options-grid">
+          <div className="ratio-widget">
+            <div className="ratio-widget-header">
+              <div>
+                <div className="ratio-widget-metric">Forecast (Nearest)</div>
+                <div className="ratio-widget-category">Nearest expiration {nearestLabel}</div>
+              </div>
+              <div className={`ratio-trend ${premiumForecastNear.biasClass || 'neutral'}`}>
+                {premiumForecastNear.biasSignal || 'Pending'}
+              </div>
+            </div>
+            <div className="ratio-widget-value">
+              {premiumForecastNear.straddleMid !== undefined && premiumForecastNear.straddleMid !== null
+                ? `Width ±$${premiumForecastNear.straddleMid.toFixed(2)}`
+                : '—'}
+            </div>
+            <div className="ratio-widget-footnote">
+              {premiumForecastNear.biasRatio !== undefined && premiumForecastNear.biasRatio !== null
+                ? `Bias: ${(premiumForecastNear.biasRatio * 100).toFixed(0)}% to Calls`
+                : 'Bias: —'}
+            </div>
+            <div className="ratio-widget-footnote">
+              {premiumForecastNear.weightedTarget !== undefined && premiumForecastNear.weightedTarget !== null
+                ? `Target: $${premiumForecastNear.weightedTarget.toFixed(2)}`
+                : 'Target: —'}
+            </div>
+          </div>
+          <div className="ratio-widget">
+            <div className="ratio-widget-header">
+              <div>
+                <div className="ratio-widget-metric">Forecast (Furthest)</div>
+                <div className="ratio-widget-category">Furthest expiration {furthestLabel}</div>
+              </div>
+              <div className={`ratio-trend ${premiumForecastFar.biasClass || 'neutral'}`}>
+                {premiumForecastFar.biasSignal || 'Pending'}
+              </div>
+            </div>
+            <div className="ratio-widget-value">
+              {premiumForecastFar.straddleMid !== undefined && premiumForecastFar.straddleMid !== null
+                ? `Width ±$${premiumForecastFar.straddleMid.toFixed(2)}`
+                : '—'}
+            </div>
+            <div className="ratio-widget-footnote">
+              {premiumForecastFar.biasRatio !== undefined && premiumForecastFar.biasRatio !== null
+                ? `Bias: ${(premiumForecastFar.biasRatio * 100).toFixed(0)}% to Calls`
+                : 'Bias: —'}
+            </div>
+            <div className="ratio-widget-footnote">
+              {premiumForecastFar.weightedTarget !== undefined && premiumForecastFar.weightedTarget !== null
+                ? `Target: $${premiumForecastFar.weightedTarget.toFixed(2)}`
+                : 'Target: —'}
             </div>
           </div>
         </div>

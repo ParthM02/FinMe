@@ -351,6 +351,72 @@ export function buildPremiumSkew(optionRows, spotPrice, otmDistance = 10) {
     };
 }
 
+export function buildPremiumForecast(optionRows, spotPrice, otmDistance = 10) {
+    if (!spotPrice || !Array.isArray(optionRows)) {
+        return { status: 'unavailable' };
+    }
+
+    const findClosestRow = (targetStrike) => optionRows.reduce((best, row) => {
+        const strike = parseNumeric(row?.strike);
+        if (strike === null) return best;
+        const diff = Math.abs(strike - targetStrike);
+        return diff < best.diff ? { diff, row } : best;
+    }, { diff: Infinity, row: null }).row;
+
+    const callRow = findClosestRow(spotPrice + otmDistance);
+    const putRow = findClosestRow(spotPrice - otmDistance);
+
+    const callPremium = midPrice(callRow, 'call');
+    const putPremium = midPrice(putRow, 'put');
+
+    if (callPremium === null || putPremium === null) {
+        return {
+            status: 'pending',
+            callPremium,
+            putPremium,
+            strikes: {
+                call: parseNumeric(callRow?.strike),
+                put: parseNumeric(putRow?.strike)
+            },
+            otmDistance
+        };
+    }
+
+    const straddleMid = callPremium + putPremium; // width proxy
+    const biasRatio = callPremium + putPremium > 0
+        ? callPremium / (callPremium + putPremium)
+        : 0.5;
+
+    let biasSignal = 'Neutral';
+    let biasClass = 'neutral';
+    if (biasRatio > 0.55) {
+        biasSignal = 'Bullish';
+        biasClass = 'bullish';
+    } else if (biasRatio < 0.45) {
+        biasSignal = 'Bearish';
+        biasClass = 'bearish';
+    }
+
+    const weightedTarget = (callPremium * (spotPrice + otmDistance) + putPremium * (spotPrice - otmDistance)) / Math.max(1e-6, callPremium + putPremium);
+
+    return {
+        status: 'ready',
+        callPremium,
+        putPremium,
+        straddleMid,
+        biasRatio,
+        biasSignal,
+        biasClass,
+        weightedTarget,
+        strikes: {
+            call: parseNumeric(callRow?.strike),
+            put: parseNumeric(putRow?.strike)
+        },
+        otmDistance,
+        timeToExpiry: getTimeToExpiryYears(optionRows)
+    };
+}
+
 function intrinsicValue(S, K, optionType = 'call') {
     if (optionType === 'call') {
         return Math.max(S - K, 0);
