@@ -86,15 +86,18 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
   const putShareNear = totalVolumeNear ? (volumeSplitNear.put / totalVolumeNear) * 100 : 0;
 
   const spot = useMemo(() => {
-    if (typeof underlyingPrice === 'number' && Number.isFinite(underlyingPrice)) {
-      return underlyingPrice;
-    }
+    // Prefer live lastTrade price from the API response; fall back to any provided underlyingPrice
     const lastTradeText = optionData?.data?.lastTrade;
     if (typeof lastTradeText === 'string') {
       const match = lastTradeText.match(/\$([0-9]+(?:\.[0-9]+)?)/);
       const parsed = match ? Number(match[1]) : null;
       if (Number.isFinite(parsed)) return parsed;
     }
+
+    if (typeof underlyingPrice === 'number' && Number.isFinite(underlyingPrice)) {
+      return underlyingPrice;
+    }
+
     return null;
   }, [optionData, underlyingPrice]);
 
