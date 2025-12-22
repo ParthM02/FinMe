@@ -192,45 +192,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
   const rangeChartMid = useMemo(() => buildBellCurveChart(spot, deltaAsymmetryMid), [deltaAsymmetryMid, spot]);
   const rangeChartNear = useMemo(() => buildBellCurveChart(spot, deltaAsymmetryNear), [deltaAsymmetryNear, spot]);
 
-  const deltaNearExplain = useMemo(() => {
-    const dist = deltaAsymmetryNear?.otmDistance || 10;
-    const expiry = formatTimeToExpiry(deltaAsymmetryNear?.timeToExpiry) || '—';
-    return (
-      `Market Expected Range: bell curve centered on spot using ±${dist} strikes to anchor width.\n` +
-      'Proxy only: derived from option deltas around those strikes; shows relative pricing of upside vs downside.\n' +
-      `Expires in ~${expiry}.`
-    );
-  }, [deltaAsymmetryNear?.otmDistance, deltaAsymmetryNear?.timeToExpiry]);
-
-  const deltaMidExplain = useMemo(() => {
-    const dist = deltaAsymmetryMid?.otmDistance || 10;
-    const expiry = formatTimeToExpiry(deltaAsymmetryMid?.timeToExpiry) || '—';
-    return (
-      `Market Expected Range: bell curve centered on spot using ±${dist} strikes to anchor width.\n` +
-      'Proxy only: shape reflects relative upside vs downside sensitivity priced into mid-term options.\n' +
-      `Expires in ~${expiry}.`
-    );
-  }, [deltaAsymmetryMid?.otmDistance, deltaAsymmetryMid?.timeToExpiry]);
-
-  const premiumNearExplain = useMemo(() => {
-    const expiry = formatTimeToExpiry(premiumForecastNear?.timeToExpiry) || '—';
-    return (
-      'Implied move ≈ straddle cost / spot. Cost is call mid + put mid at symmetric strikes (a strangle), per share.\n' +
-      'Bias bar: % of premium sitting in calls vs puts at those strikes (green = calls).\n' +
-      'Target: premium-weighted “tilt” level = (callPremium·upStrike + putPremium·downStrike) / (callPremium + putPremium); not a forecast, just where premium is concentrated.\n' +
-      `Expires in ~${expiry}.`
-    );
-  }, [premiumForecastNear?.timeToExpiry]);
-
-  const premiumMidExplain = useMemo(() => {
-    const expiry = formatTimeToExpiry(premiumForecastMid?.timeToExpiry) || '—';
-    return (
-      'Implied move ≈ straddle cost / spot for the ~3M expiry. Cost is call mid + put mid at symmetric strikes.\n' +
-      'Bias bar: % of premium in calls vs puts at those strikes (green = calls).\n' +
-      'Target: premium-weighted “tilt” level; not a directional forecast.\n' +
-      `Expires in ~${expiry}.`
-    );
-  }, [premiumForecastMid?.timeToExpiry]);
 
   const rangeChartOptions = {
     responsive: true,
@@ -282,6 +243,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
   const impliedMoveNear = useMemo(() => computeImpliedMovePct(premiumForecastNear), [premiumForecastNear, spot]);
   const impliedMoveMid = useMemo(() => computeImpliedMovePct(premiumForecastMid), [premiumForecastMid, spot]);
 
+  const expiryNearText = formatTimeToExpiry(deltaAsymmetryNear?.timeToExpiry) || formatTimeToExpiry(premiumForecastNear?.timeToExpiry) || null;
+  const expiryMidText = formatTimeToExpiry(deltaAsymmetryMid?.timeToExpiry) || formatTimeToExpiry(premiumForecastMid?.timeToExpiry) || null;
+
   return (
     <div className="widget-row fundamental-sections">
       <div className="financial-ratios-section">
@@ -324,9 +288,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                   <div className="options-volume-fill bullish" style={{ width: `${callShareNear}%` }} />
                 </div>
                 <span>{formatNumber(volumeSplitNear.call)}</span>
-              </div>
-              <div className="options-volume-row">
-                <span>Puts</span>
                 <div className="options-volume-track">
                   <div className="options-volume-fill bearish" style={{ width: `${putShareNear}%` }} />
                 </div>
@@ -383,9 +344,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
           <div>
             <div className="financial-ratios-title">Options Implied Probabilities</div>
             <div className="financial-ratios-subtitle">Nearest vs ~3M expiration</div>
-            <div className="ratio-supplement">
-              Market Expected Range plots a bell curve proxy from option deltas; Midpoint/Premium shows what the market charges for a symmetric strangle. Signals are market-implied, not guarantees.
-            </div>
           </div>
         </div>
         <div className="financial-ratios-grid options-grid">
@@ -412,8 +370,8 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 ? `Anchored at ±${deltaAsymmetryNear.otmDistance || 10} around $${spot.toFixed(2)}`
                 : 'Waiting for price'}
             </div>
-            <div className="ratio-supplement">
-              {deltaNearExplain}
+            <div className="ratio-widget-footnote">
+              {expiryNearText ? `Expires in ~${expiryNearText}` : 'Expires: —'}
             </div>
             <div className="options-delta-chart">
               {rangeChartNear ? (
@@ -454,9 +412,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                   className="options-bias-segment bullish"
                   style={{ width: `${Math.max(0, Math.min((premiumForecastNear.biasRatio ?? 0.5) * 100, 100))}%` }}
                 />
-                <div
-                  className="options-bias-segment bearish"
-                  style={{ width: `${Math.max(0, Math.min((1 - (premiumForecastNear.biasRatio ?? 0.5)) * 100, 100))}%` }}
                 />
               </div>
               <div className="options-bias-labels">
@@ -469,8 +424,8 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                   : 'Bias loading...'}
               </div>
             </div>
-            <div className="ratio-supplement">
-              {premiumNearExplain}
+            <div className="ratio-widget-footnote">
+              {expiryNearText ? `Expires in ~${expiryNearText}` : 'Expires: —'}
             </div>
           </div>
           <div className="ratio-widget">
@@ -496,8 +451,8 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 ? `Anchored at ±${deltaAsymmetryMid.otmDistance || 10} around $${spot.toFixed(2)}`
                 : 'Waiting for price'}
             </div>
-            <div className="ratio-supplement">
-              {deltaMidExplain}
+            <div className="ratio-widget-footnote">
+              {expiryMidText ? `Expires in ~${expiryMidText}` : 'Expires: —'}
             </div>
             <div className="options-delta-chart">
               {rangeChartMid ? (
@@ -532,6 +487,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 ? `Target: $${premiumForecastMid.weightedTarget.toFixed(2)}`
                 : 'Target: —'}
             </div>
+            <div className="ratio-widget-footnote">
+              {expiryMidText ? `Expires in ~${expiryMidText}` : 'Expires: —'}
+            </div>
             <div className="options-bias">
               <div className="options-bias-track">
                 <div
@@ -552,9 +510,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                   ? `${(premiumForecastMid.biasRatio * 100).toFixed(0)}% premium to Calls`
                   : 'Bias loading...'}
               </div>
-            </div>
-            <div className="ratio-supplement">
-              {premiumMidExplain}
             </div>
           </div>
         </div>

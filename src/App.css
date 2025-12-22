@@ -837,9 +837,11 @@ body {
 .ratio-widget-value-lines {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.95rem;
+  gap: 0.15rem;
+  font-size: 1.35rem;
+  font-weight: 600;
   color: #e5e7eb;
+  line-height: 1.3;
 }
 
 .options-bias {
