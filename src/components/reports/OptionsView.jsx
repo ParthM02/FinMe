@@ -23,6 +23,52 @@ const formatNumber = (value) => {
   return num.toFixed(0);
 };
 
+const buildConeChart = (spot, asymmetry) => {
+  if (!spot || !asymmetry || asymmetry.status === 'unavailable') return null;
+  const distance = asymmetry.otmDistance ?? 10;
+  const labels = [
+    `-${distance} OTM`,
+    'Spot',
+    `+${distance} OTM`
+  ];
+
+  const callDelta = asymmetry.callDelta ?? 0;
+  const putDelta = asymmetry.putDelta ?? 0;
+
+  return {
+    labels,
+    datasets: [
+      {
+        label: 'Downside probability',
+        data: [putDelta, 0, 0],
+        borderColor: '#f97316',
+        backgroundColor: 'rgba(249, 115, 22, 0.25)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 3
+      },
+      {
+        label: 'Upside probability',
+        data: [0, 0, callDelta],
+        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(56, 189, 248, 0.25)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 3
+      }
+    ]
+  };
+};
+
+const formatTimeToExpiry = (years) => {
+  if (years === null || years === undefined) return null;
+  const num = Number(years);
+  if (!Number.isFinite(num) || num <= 0) return null;
+  const days = Math.round(num * 365);
+  if (days === 1) return '1 day';
+  return `${days} days`;
+};
+
 const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionData, underlyingPrice }) => {
   const ratioValueFar = putCallRatioFar !== null ? Number(putCallRatioFar) : (putCallRatio !== null ? Number(putCallRatio) : null);
   const ratioValueNear = putCallRatioNear !== null ? Number(putCallRatioNear) : null;
@@ -42,15 +88,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
       : ratioValueNear < 0.8
         ? { label: 'Bullish', cls: 'bullish' }
         : { label: 'Neutral', cls: 'neutral' };
-
-  const volumeSplit = useMemo(() => {
-    const rows = optionData?.data?.table?.rows || [];
-    return rows.reduce((acc, row) => {
-      acc.call += Number(row?.c_Volume) || 0;
-      acc.put += Number(row?.p_Volume) || 0;
-      return acc;
-    }, { call: 0, put: 0 });
-  }, [optionData]);
 
   const nearestGroup = useMemo(() => getNearestExpiryGroup(optionData?.data?.table?.rows || []), [optionData]);
   const furthestGroup = useMemo(() => getFurthestExpiryGroup(optionData?.data?.table?.rows || []), [optionData]);
@@ -72,10 +109,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
       return acc;
     }, { call: 0, put: 0 });
   }, [furthestGroup]);
-
-  const totalVolume = volumeSplit.call + volumeSplit.put;
-  const callShare = totalVolume ? (volumeSplit.call / totalVolume) * 100 : 0;
-  const putShare = totalVolume ? (volumeSplit.put / totalVolume) * 100 : 0;
 
   const totalVolumeFar = volumeSplitFar.call + volumeSplitFar.put;
   const callShareFar = totalVolumeFar ? (volumeSplitFar.call / totalVolumeFar) * 100 : 0;
@@ -101,8 +134,8 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
     return null;
   }, [optionData, underlyingPrice]);
 
-  const nearestRows = nearestGroup?.rows || [];
-  const furthestRows = furthestGroup?.rows || [];
+  const nearestRows = useMemo(() => nearestGroup?.rows || [], [nearestGroup]);
+  const furthestRows = useMemo(() => furthestGroup?.rows || [], [furthestGroup]);
 
   const nearestLabel = formatExpiryLabel(nearestGroup?.date);
   const furthestLabel = formatExpiryLabel(furthestGroup?.date);
@@ -118,45 +151,8 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
   const premiumForecastNear = useMemo(() => buildPremiumForecast(nearestRows, spot, 10), [nearestRows, spot]);
   const premiumForecastFar = useMemo(() => buildPremiumForecast(furthestRows, spot, 10), [furthestRows, spot]);
 
-  const buildConeChart = (asymmetry) => {
-    if (!spot || !asymmetry || asymmetry.status === 'unavailable') return null;
-    const distance = asymmetry.otmDistance ?? 10;
-    const labels = [
-      `-${distance} OTM`,
-      'Spot',
-      `+${distance} OTM`
-    ];
-
-    const callDelta = asymmetry.callDelta ?? 0;
-    const putDelta = asymmetry.putDelta ?? 0;
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Downside probability',
-          data: [putDelta, 0, 0],
-          borderColor: '#f97316',
-          backgroundColor: 'rgba(249, 115, 22, 0.25)',
-          tension: 0.3,
-          fill: true,
-          pointRadius: 3
-        },
-        {
-          label: 'Upside probability',
-          data: [0, 0, callDelta],
-          borderColor: '#38bdf8',
-          backgroundColor: 'rgba(56, 189, 248, 0.25)',
-          tension: 0.3,
-          fill: true,
-          pointRadius: 3
-        }
-      ]
-    };
-  };
-
-  const deltaChart = useMemo(() => buildConeChart(deltaAsymmetry), [deltaAsymmetry, spot]);
-  const deltaChartNear = useMemo(() => buildConeChart(deltaAsymmetryNear), [deltaAsymmetryNear, spot]);
+  const deltaChart = useMemo(() => buildConeChart(spot, deltaAsymmetry), [deltaAsymmetry, spot]);
+  const deltaChartNear = useMemo(() => buildConeChart(spot, deltaAsymmetryNear), [deltaAsymmetryNear, spot]);
 
   const deltaChartOptions = {
     responsive: true,
@@ -291,6 +287,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
           <div>
             <div className="financial-ratios-title">Options Implied Probabilities</div>
             <div className="financial-ratios-subtitle">Nearest vs furthest expiration</div>
+            <div className="ratio-supplement">
+              Delta Method is best for a model-based probability proxy (uses implied volatility). Midpoint/Premium Method is best for directional bias (uses relative call vs put pricing). These are market-implied signals, not guarantees.
+            </div>
           </div>
         </div>
         <div className="financial-ratios-grid options-grid">
@@ -314,6 +313,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 ? `Nearest expiry ±${deltaAsymmetryNear.otmDistance || 10} around $${spot.toFixed(2)}`
                 : 'Waiting for price'}
             </div>
+            <div className="ratio-supplement">
+              Best for: probability proxy. Numbers are |Δ| for the call/put at symmetric strikes; higher call vs put suggests upside skew. Expires in ~{formatTimeToExpiry(deltaAsymmetryNear.timeToExpiry) || '—'}.
+            </div>
             <div className="options-delta-chart">
               {deltaChartNear ? (
                 <Line data={deltaChartNear} options={deltaChartOptions} height={120} />
@@ -334,7 +336,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
             </div>
             <div className="ratio-widget-value">
               {premiumForecastNear.straddleMid !== undefined && premiumForecastNear.straddleMid !== null
-                ? `Width ±$${premiumForecastNear.straddleMid.toFixed(2)}`
+                ? `Cost $${premiumForecastNear.straddleMid.toFixed(2)}`
                 : '—'}
             </div>
             <div className="ratio-widget-footnote">
@@ -346,6 +348,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
               {premiumForecastNear.weightedTarget !== undefined && premiumForecastNear.weightedTarget !== null
                 ? `Target: $${premiumForecastNear.weightedTarget.toFixed(2)}`
                 : 'Target: —'}
+            </div>
+            <div className="ratio-supplement">
+              Best for: directional bias. “Cost” is call + put premium at symmetric strikes (a strangle), roughly the priced-in move. Expires in ~{formatTimeToExpiry(premiumForecastNear.timeToExpiry) || '—'}.
             </div>
           </div>
           <div className="ratio-widget">
@@ -368,6 +373,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 ? `±${deltaAsymmetry.otmDistance || 10} OTM around $${spot.toFixed(2)}`
                 : 'Waiting for price'}
             </div>
+            <div className="ratio-supplement">
+              Best for: probability proxy. Numbers are |Δ| for the call/put at symmetric strikes; higher call vs put suggests upside skew. Expires in ~{formatTimeToExpiry(deltaAsymmetry.timeToExpiry) || '—'}.
+            </div>
             <div className="options-delta-chart">
               {deltaChart ? (
                 <Line data={deltaChart} options={deltaChartOptions} height={120} />
@@ -388,7 +396,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
             </div>
             <div className="ratio-widget-value">
               {premiumForecastFar.straddleMid !== undefined && premiumForecastFar.straddleMid !== null
-                ? `Width ±$${premiumForecastFar.straddleMid.toFixed(2)}`
+                ? `Cost $${premiumForecastFar.straddleMid.toFixed(2)}`
                 : '—'}
             </div>
             <div className="ratio-widget-footnote">
@@ -400,6 +408,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
               {premiumForecastFar.weightedTarget !== undefined && premiumForecastFar.weightedTarget !== null
                 ? `Target: $${premiumForecastFar.weightedTarget.toFixed(2)}`
                 : 'Target: —'}
+            </div>
+            <div className="ratio-supplement">
+              Best for: directional bias. “Cost” is call + put premium at symmetric strikes (a strangle), roughly the priced-in move. Expires in ~{formatTimeToExpiry(premiumForecastFar.timeToExpiry) || '—'}.
             </div>
           </div>
         </div>
