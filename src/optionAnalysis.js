@@ -52,6 +52,20 @@ export function getFurthestExpiryGroup(optionRows) {
     return groups.reduce((best, g) => (g.date > best.date ? g : best), groups[0]);
 }
 
+export function getExpiryGroupNearestToTarget(optionRows, targetDate) {
+    if (!(targetDate instanceof Date) || Number.isNaN(targetDate.getTime())) return null;
+    const groups = groupOptionRowsByExpiry(optionRows);
+    if (!groups.length) return null;
+
+    return groups.reduce((best, g) => {
+        const diff = Math.abs(g.date.getTime() - targetDate.getTime());
+        if (diff < best.diff) {
+            return { diff, group: g };
+        }
+        return best;
+    }, { diff: Infinity, group: null }).group;
+}
+
 export function getNearestExpiryRows(optionRows) {
     const g = getNearestExpiryGroup(optionRows);
     return g?.rows || [];
