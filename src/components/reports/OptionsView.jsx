@@ -412,6 +412,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 ? `Target: $${premiumForecastNear.weightedTarget.toFixed(2)}`
                 : 'Target: —'}
             </div>
+            <div className="ratio-widget-footnote">
+              {expiryNearText ? `Expires in ~${expiryNearText}` : 'Expires: —'}
+            </div>
             <div className="options-bias">
               <div className="options-bias-track">
                 <div
@@ -432,9 +435,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                   ? `${(premiumForecastNear.biasRatio * 100).toFixed(0)}% premium to Calls`
                   : 'Bias loading...'}
               </div>
-            </div>
-            <div className="ratio-widget-footnote">
-              {expiryNearText ? `Expires in ~${expiryNearText}` : 'Expires: —'}
             </div>
           </div>
           <div className="ratio-widget">
