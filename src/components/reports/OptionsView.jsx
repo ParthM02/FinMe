@@ -10,7 +10,7 @@ import {
   Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { buildDeltaAsymmetry, getNearestExpiryRows } from '../../optionAnalysis';
+import { buildDeltaAsymmetry, getNearestExpiryRows, getFurthestExpiryRows } from '../../optionAnalysis';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -52,9 +52,22 @@ const OptionsView = ({ putCallRatio, putCallRatioNear, optionData, underlyingPri
     }, { call: 0, put: 0 });
   }, [optionData]);
 
+  const volumeSplitNear = useMemo(() => {
+    const rows = getNearestExpiryRows(optionData?.data?.table?.rows || []);
+    return rows.reduce((acc, row) => {
+      acc.call += Number(row?.c_Volume) || 0;
+      acc.put += Number(row?.p_Volume) || 0;
+      return acc;
+    }, { call: 0, put: 0 });
+  }, [optionData]);
+
   const totalVolume = volumeSplit.call + volumeSplit.put;
   const callShare = totalVolume ? (volumeSplit.call / totalVolume) * 100 : 0;
   const putShare = totalVolume ? (volumeSplit.put / totalVolume) * 100 : 0;
+
+  const totalVolumeNear = volumeSplitNear.call + volumeSplitNear.put;
+  const callShareNear = totalVolumeNear ? (volumeSplitNear.call / totalVolumeNear) * 100 : 0;
+  const putShareNear = totalVolumeNear ? (volumeSplitNear.put / totalVolumeNear) * 100 : 0;
 
   const spot = useMemo(() => {
     if (typeof underlyingPrice === 'number' && Number.isFinite(underlyingPrice)) {
@@ -74,10 +87,14 @@ const OptionsView = ({ putCallRatio, putCallRatioNear, optionData, underlyingPri
     return getNearestExpiryRows(rows);
   }, [optionData]);
 
-  const deltaAsymmetry = useMemo(() => {
+  const furthestRows = useMemo(() => {
     const rows = optionData?.data?.table?.rows || [];
-    return buildDeltaAsymmetry(rows, spot, 10);
-  }, [optionData, spot]);
+    return getFurthestExpiryRows(rows);
+  }, [optionData]);
+
+  const deltaAsymmetry = useMemo(() => {
+    return buildDeltaAsymmetry(furthestRows, spot, 10);
+  }, [furthestRows, spot]);
 
   const deltaAsymmetryNear = useMemo(() => {
     return buildDeltaAsymmetry(nearestRows, spot, 10);
@@ -160,7 +177,7 @@ const OptionsView = ({ putCallRatio, putCallRatioNear, optionData, underlyingPri
       <div className="financial-ratios-section">
         <div className="financial-ratios-header">
           <div>
-            <div className="financial-ratios-title">Options Positioning (All expiries)</div>
+            <div className="financial-ratios-title">Options Positioning (Long-dated)</div>
             <div className="financial-ratios-subtitle">Put/call momentum & volume mix</div>
           </div>
         </div>
@@ -169,7 +186,7 @@ const OptionsView = ({ putCallRatio, putCallRatioNear, optionData, underlyingPri
             <div className="ratio-widget-header">
               <div>
                 <div className="ratio-widget-metric">Put / Call Ratio (All)</div>
-                <div className="ratio-widget-category">Intraday sentiment</div>
+                <div className="ratio-widget-category">Across expiries</div>
               </div>
               <div className={`ratio-trend ${ratioSignal.cls}`}>
                 {ratioSignal.label}
@@ -190,38 +207,18 @@ const OptionsView = ({ putCallRatio, putCallRatioNear, optionData, underlyingPri
                 <span>Bearish</span>
               </div>
             </div>
-          </div>
-          <div className="ratio-widget">
-            <div className="ratio-widget-header">
-              <div>
-                <div className="ratio-widget-metric">Volume Mix</div>
-                <div className="ratio-widget-category">Across tracked chains</div>
-              </div>
-              <div className={`ratio-trend ${callShare >= putShare ? 'bullish' : 'bearish'}`}>
-                {callShare >= putShare ? 'Calls Favored' : 'Puts Favored'}
-              </div>
-            </div>
-            <div className="ratio-widget-value">
-              {totalVolume ? `${formatNumber(totalVolume)} contracts` : '—'}
-            </div>
-            <div className="options-volume-bars">
+            <div className="options-volume-bars mini">
               <div className="options-volume-row">
                 <span>Calls</span>
                 <div className="options-volume-track">
-                  <div
-                    className="options-volume-fill bullish"
-                    style={{ width: `${callShare}%` }}
-                  />
+                  <div className="options-volume-fill bullish" style={{ width: `${callShare}%` }} />
                 </div>
                 <span>{formatNumber(volumeSplit.call)}</span>
               </div>
               <div className="options-volume-row">
                 <span>Puts</span>
                 <div className="options-volume-track">
-                  <div
-                    className="options-volume-fill bearish"
-                    style={{ width: `${putShare}%` }}
-                  />
+                  <div className="options-volume-fill bearish" style={{ width: `${putShare}%` }} />
                 </div>
                 <span>{formatNumber(volumeSplit.put)}</span>
               </div>
@@ -252,13 +249,29 @@ const OptionsView = ({ putCallRatio, putCallRatioNear, optionData, underlyingPri
                 <span>Bearish</span>
               </div>
             </div>
+            <div className="options-volume-bars mini">
+              <div className="options-volume-row">
+                <span>Calls</span>
+                <div className="options-volume-track">
+                  <div className="options-volume-fill bullish" style={{ width: `${callShareNear}%` }} />
+                </div>
+                <span>{formatNumber(volumeSplitNear.call)}</span>
+              </div>
+              <div className="options-volume-row">
+                <span>Puts</span>
+                <div className="options-volume-track">
+                  <div className="options-volume-fill bearish" style={{ width: `${putShareNear}%` }} />
+                </div>
+                <span>{formatNumber(volumeSplitNear.put)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       <div className="financial-ratios-section">
         <div className="financial-ratios-header">
           <div>
-            <div className="financial-ratios-title">Options Implied Probabilities (All)</div>
+            <div className="financial-ratios-title">Options Implied Probabilities (Long-dated)</div>
             <div className="financial-ratios-subtitle">Delta-based probability cone</div>
           </div>
         </div>
@@ -266,7 +279,7 @@ const OptionsView = ({ putCallRatio, putCallRatioNear, optionData, underlyingPri
           <div className="ratio-widget">
             <div className="ratio-widget-header">
               <div>
-                <div className="ratio-widget-metric">Delta Method (All)</div>
+                <div className="ratio-widget-metric">Delta Method (Long-dated)</div>
                 <div className="ratio-widget-category">Equidistant call vs put</div>
               </div>
               <div className={`ratio-trend ${deltaAsymmetry.signalClass || 'neutral'}`}>

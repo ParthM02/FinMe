@@ -797,6 +797,15 @@ body {
   color: #d1d5db;
 }
 
+.options-volume-bars.mini {
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.options-volume-bars.mini .options-volume-row {
+  font-size: 0.8rem;
+}
+
 .options-volume-track {
   flex: 1;
   height: 8px;
