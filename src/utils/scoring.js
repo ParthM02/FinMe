@@ -1,6 +1,13 @@
 import { isUptrendByRSI, rsiCrossoverSignal, rsiOverboughtOversoldSignal } from '../technicalAnalysis';
 import { getPopularSentiment, extractFinancialRatios, buildInsiderActivityCards, buildInstitutionalActivityCards } from './helpers';
-import { buildDeltaAsymmetry, getNearestExpiryRows, getFurthestExpiryRows } from '../optionAnalysis';
+import {
+  buildDeltaAsymmetry,
+  buildPremiumForecast,
+  calculatePutCallRatio,
+  getExpiryGroupNearestToTarget,
+  getFurthestExpiryGroup,
+  getNearestExpiryGroup
+} from '../optionAnalysis';
 
 const MAX_RATIO_METRICS = 6;
 const SCORE = { bullish: 100, neutral: 50, bearish: 0 };
@@ -87,27 +94,87 @@ export const calculateAllScores = ({
 
   // Options Score
   const optionComponents = [];
+  const optionRows = optionData?.data?.table?.rows || [];
 
-  const nearRatioScore = scoreFromRatio(putCallRatioNear ?? null);
+  const target3MDate = new Date();
+  target3MDate.setMonth(target3MDate.getMonth() + 3);
+
+  const nearestGroup = getNearestExpiryGroup(optionRows);
+  const nearestRows = nearestGroup?.rows || [];
+
+  const midTermGroup = optionRows.length
+    ? (getExpiryGroupNearestToTarget(optionRows, target3MDate) || getFurthestExpiryGroup(optionRows))
+    : null;
+  const midTermRows = midTermGroup?.rows || [];
+
+  const spotPrice = (() => {
+    const lastTradeText = optionData?.data?.lastTrade;
+    if (typeof lastTradeText === 'string') {
+      const match = lastTradeText.match(/\$([0-9]+(?:\.[0-9]+)?)/);
+      const parsed = match ? Number(match[1]) : null;
+      if (Number.isFinite(parsed)) return parsed;
+    }
+
+    return Number.isFinite(close) ? close : null;
+  })();
+
+  const ratioValueNear = (() => {
+    if (putCallRatioNear !== null && putCallRatioNear !== undefined && Number.isFinite(Number(putCallRatioNear))) {
+      return Number(putCallRatioNear);
+    }
+
+    const computed = calculatePutCallRatio(nearestRows);
+    if (computed !== null && Number.isFinite(computed)) return computed;
+
+    if (putCallRatio !== null && putCallRatio !== undefined && Number.isFinite(Number(putCallRatio))) {
+      return Number(putCallRatio);
+    }
+
+    return null;
+  })();
+
+  const ratioValueMid = (() => {
+    const computed = calculatePutCallRatio(midTermRows);
+    if (computed !== null && Number.isFinite(computed)) return computed;
+
+    if (putCallRatioFar !== null && putCallRatioFar !== undefined && Number.isFinite(Number(putCallRatioFar))) {
+      return Number(putCallRatioFar);
+    }
+
+    if (putCallRatio !== null && putCallRatio !== undefined && Number.isFinite(Number(putCallRatio))) {
+      return Number(putCallRatio);
+    }
+
+    return null;
+  })();
+
+  const nearRatioScore = scoreFromRatio(ratioValueNear);
   if (nearRatioScore !== null) optionComponents.push(nearRatioScore);
 
-  const farRatioValue = putCallRatioFar ?? putCallRatio;
-  const farRatioScore = scoreFromRatio(farRatioValue ?? null);
-  if (farRatioScore !== null) optionComponents.push(farRatioScore);
+  const midRatioScore = scoreFromRatio(ratioValueMid);
+  if (midRatioScore !== null) optionComponents.push(midRatioScore);
 
-  const rows = optionData?.data?.table?.rows || [];
-  const nearestRows = getNearestExpiryRows(rows);
-  const furthestRows = getFurthestExpiryRows(rows);
-
-  const deltaNear = buildDeltaAsymmetry(nearestRows, close, 10);
+  const deltaNear = buildDeltaAsymmetry(nearestRows, spotPrice, 10);
   if (deltaNear?.status === 'ready') {
     const s = scoreFromSignal(deltaNear.signalClass);
     if (s !== null) optionComponents.push(s);
   }
 
-  const deltaFar = buildDeltaAsymmetry(furthestRows, close, 10);
-  if (deltaFar?.status === 'ready') {
-    const s = scoreFromSignal(deltaFar.signalClass);
+  const deltaMid = buildDeltaAsymmetry(midTermRows, spotPrice, 10);
+  if (deltaMid?.status === 'ready') {
+    const s = scoreFromSignal(deltaMid.signalClass);
+    if (s !== null) optionComponents.push(s);
+  }
+
+  const premiumNear = buildPremiumForecast(nearestRows, spotPrice, 10);
+  if (premiumNear?.status === 'ready') {
+    const s = scoreFromSignal(premiumNear.biasClass);
+    if (s !== null) optionComponents.push(s);
+  }
+
+  const premiumMid = buildPremiumForecast(midTermRows, spotPrice, 10);
+  if (premiumMid?.status === 'ready') {
+    const s = scoreFromSignal(premiumMid.biasClass);
     if (s !== null) optionComponents.push(s);
   }
 
