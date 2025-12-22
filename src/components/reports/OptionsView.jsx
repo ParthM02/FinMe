@@ -10,7 +10,7 @@ import {
   Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { buildDeltaAsymmetry, getNearestExpiryRows, getFurthestExpiryRows, formatExpiryLabel } from '../../optionAnalysis';
+import { buildDeltaAsymmetry, getNearestExpiryGroup, getFurthestExpiryGroup, formatExpiryLabel } from '../../optionAnalysis';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -52,23 +52,26 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
     }, { call: 0, put: 0 });
   }, [optionData]);
 
-  const volumeSplitFar = useMemo(() => {
-    const rows = getFurthestExpiryRows(optionData?.data?.table?.rows || []);
-    return rows.reduce((acc, row) => {
-      acc.call += Number(row?.c_Volume) || 0;
-      acc.put += Number(row?.p_Volume) || 0;
-      return acc;
-    }, { call: 0, put: 0 });
-  }, [optionData]);
+  const nearestGroup = useMemo(() => getNearestExpiryGroup(optionData?.data?.table?.rows || []), [optionData]);
+  const furthestGroup = useMemo(() => getFurthestExpiryGroup(optionData?.data?.table?.rows || []), [optionData]);
 
   const volumeSplitNear = useMemo(() => {
-    const rows = getNearestExpiryRows(optionData?.data?.table?.rows || []);
+    const rows = nearestGroup?.rows || [];
     return rows.reduce((acc, row) => {
       acc.call += Number(row?.c_Volume) || 0;
       acc.put += Number(row?.p_Volume) || 0;
       return acc;
     }, { call: 0, put: 0 });
-  }, [optionData]);
+  }, [nearestGroup]);
+
+  const volumeSplitFar = useMemo(() => {
+    const rows = furthestGroup?.rows || [];
+    return rows.reduce((acc, row) => {
+      acc.call += Number(row?.c_Volume) || 0;
+      acc.put += Number(row?.p_Volume) || 0;
+      return acc;
+    }, { call: 0, put: 0 });
+  }, [furthestGroup]);
 
   const totalVolume = volumeSplit.call + volumeSplit.put;
   const callShare = totalVolume ? (volumeSplit.call / totalVolume) * 100 : 0;
@@ -95,18 +98,11 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
     return null;
   }, [optionData, underlyingPrice]);
 
-  const nearestRows = useMemo(() => {
-    const rows = optionData?.data?.table?.rows || [];
-    return getNearestExpiryRows(rows);
-  }, [optionData]);
+  const nearestRows = nearestGroup?.rows || [];
+  const furthestRows = furthestGroup?.rows || [];
 
-  const furthestRows = useMemo(() => {
-    const rows = optionData?.data?.table?.rows || [];
-    return getFurthestExpiryRows(rows);
-  }, [optionData]);
-
-  const nearestLabel = formatExpiryLabel(nearestRows);
-  const furthestLabel = formatExpiryLabel(furthestRows);
+  const nearestLabel = formatExpiryLabel(nearestGroup?.date);
+  const furthestLabel = formatExpiryLabel(furthestGroup?.date);
 
   const deltaAsymmetry = useMemo(() => {
     return buildDeltaAsymmetry(furthestRows, spot, 10);

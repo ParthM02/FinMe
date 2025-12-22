@@ -11,7 +11,7 @@ export function calculatePutCallRatio(optionRows) {
   return totalCallVolume === 0 ? null : totalPutVolume / totalCallVolume;
 }
 
-export function getNearestExpiryRows(optionRows) {
+export function groupOptionRowsByExpiry(optionRows) {
     if (!Array.isArray(optionRows) || optionRows.length === 0) return [];
 
     const groups = [];
@@ -23,10 +23,12 @@ export function getNearestExpiryRows(optionRows) {
             if (!Number.isNaN(parsed)) {
                 currentGroup = {
                     key: row.expirygroup.trim(),
-                    date: parsed,
+                    date: new Date(parsed),
                     rows: []
                 };
                 groups.push(currentGroup);
+            } else {
+                currentGroup = null;
             }
         }
 
@@ -35,44 +37,34 @@ export function getNearestExpiryRows(optionRows) {
         }
     });
 
-    if (!groups.length) return [];
-    const nearest = groups.reduce((best, g) => (g.date < best.date ? g : best), groups[0]);
-    return nearest.rows || [];
+    return groups.filter((g) => g.date instanceof Date && !Number.isNaN(g.date.getTime()));
+}
+
+export function getNearestExpiryGroup(optionRows) {
+    const groups = groupOptionRowsByExpiry(optionRows);
+    if (!groups.length) return null;
+    return groups.reduce((best, g) => (g.date < best.date ? g : best), groups[0]);
+}
+
+export function getFurthestExpiryGroup(optionRows) {
+    const groups = groupOptionRowsByExpiry(optionRows);
+    if (!groups.length) return null;
+    return groups.reduce((best, g) => (g.date > best.date ? g : best), groups[0]);
+}
+
+export function getNearestExpiryRows(optionRows) {
+    const g = getNearestExpiryGroup(optionRows);
+    return g?.rows || [];
 }
 
 export function getFurthestExpiryRows(optionRows) {
-    if (!Array.isArray(optionRows) || optionRows.length === 0) return [];
-
-    const groups = [];
-    let currentGroup = null;
-
-    optionRows.forEach((row) => {
-        if (typeof row.expirygroup === 'string' && row.expirygroup.trim()) {
-            const parsed = Date.parse(row.expirygroup);
-            if (!Number.isNaN(parsed)) {
-                currentGroup = {
-                    key: row.expirygroup.trim(),
-                    date: parsed,
-                    rows: []
-                };
-                groups.push(currentGroup);
-            }
-        }
-
-        if (currentGroup) {
-            currentGroup.rows.push(row);
-        }
-    });
-
-    if (!groups.length) return [];
-    const furthest = groups.reduce((best, g) => (g.date > best.date ? g : best), groups[0]);
-    return furthest.rows || [];
+    const g = getFurthestExpiryGroup(optionRows);
+    return g?.rows || [];
 }
 
-export function formatExpiryLabel(rows) {
-    const date = parseExpiryDateFromRows(rows);
-    if (!date) return 'N/A';
-    const opts = { month: 'short', day: 'numeric' };
+export function formatExpiryLabel(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return 'N/A';
+    const opts = { month: 'short', day: 'numeric', year: 'numeric' };
     return date.toLocaleDateString('en-US', opts);
 }
 
