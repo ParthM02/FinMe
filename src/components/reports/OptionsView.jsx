@@ -56,6 +56,19 @@ const buildBellCurveChart = (spot, asymmetry) => {
         fill: true,
         pointRadius: 0,
         borderWidth: 2
+      },
+      {
+        label: 'Anchor',
+        data: [
+          { x: spot, y: 0 },
+          { x: spot, y: 1 }
+        ],
+        borderColor: '#a855f7',
+        backgroundColor: 'rgba(168, 85, 247, 0.2)',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+        tension: 0
       }
     ]
   };
@@ -387,9 +400,12 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
               </div>
             </div>
             <div className="ratio-widget-value">
-              {deltaAsymmetryNear.callDelta !== null && deltaAsymmetryNear.putDelta !== null
-                ? `${(deltaAsymmetryNear.callDelta ?? 0).toFixed(2)} / ${(deltaAsymmetryNear.putDelta ?? 0).toFixed(2)}`
-                : '—'}
+              {deltaAsymmetryNear.callDelta !== null && deltaAsymmetryNear.putDelta !== null ? (
+                <div className="ratio-widget-value-lines">
+                  <div>{`${(deltaAsymmetryNear.callDelta * 100).toFixed(0)}% theoretical probability of finishing above $${(spot + (deltaAsymmetryNear.otmDistance || 10)).toFixed(2)}`}</div>
+                  <div>{`${(deltaAsymmetryNear.putDelta * 100).toFixed(0)}% theoretical probability of finishing below $${(spot - (deltaAsymmetryNear.otmDistance || 10)).toFixed(2)}`}</div>
+                </div>
+              ) : '—'}
             </div>
             <div className="ratio-widget-footnote">
               {spot
@@ -419,7 +435,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
             </div>
             <div className="ratio-widget-value">
               {impliedMoveNear !== null
-                ? `${impliedMoveNear.toFixed(1)}%`
+                ? `${impliedMoveNear.toFixed(1)}% swing expected`
                 : '—'}
             </div>
             <div className="ratio-widget-footnote">
@@ -468,9 +484,12 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
               </div>
             </div>
             <div className="ratio-widget-value">
-              {deltaAsymmetryMid.callDelta !== null && deltaAsymmetryMid.putDelta !== null
-                ? `${(deltaAsymmetryMid.callDelta ?? 0).toFixed(2)} / ${(deltaAsymmetryMid.putDelta ?? 0).toFixed(2)}`
-                : '—'}
+              {deltaAsymmetryMid.callDelta !== null && deltaAsymmetryMid.putDelta !== null ? (
+                <div className="ratio-widget-value-lines">
+                  <div>{`${(deltaAsymmetryMid.callDelta * 100).toFixed(0)}% theoretical probability of finishing above $${(spot + (deltaAsymmetryMid.otmDistance || 10)).toFixed(2)}`}</div>
+                  <div>{`${(deltaAsymmetryMid.putDelta * 100).toFixed(0)}% theoretical probability of finishing below $${(spot - (deltaAsymmetryMid.otmDistance || 10)).toFixed(2)}`}</div>
+                </div>
+              ) : '—'}
             </div>
             <div className="ratio-widget-footnote">
               {spot
@@ -500,7 +519,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
             </div>
             <div className="ratio-widget-value">
               {impliedMoveMid !== null
-                ? `${impliedMoveMid.toFixed(1)}%`
+                ? `${impliedMoveMid.toFixed(1)}% swing expected`
                 : '—'}
             </div>
             <div className="ratio-widget-footnote">

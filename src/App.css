@@ -834,6 +834,14 @@ body {
   margin-top: 0.75rem;
 }
 
+.ratio-widget-value-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.95rem;
+  color: #e5e7eb;
+}
+
 .options-bias {
   margin-top: 0.65rem;
   display: flex;
