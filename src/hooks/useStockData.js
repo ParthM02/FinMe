@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { calculatePutCallRatio, getNearestExpiryRows } from '../optionAnalysis';
 
 export const useStockData = (searchTicker, useTestData) => {
   const [data, setData] = useState({
@@ -10,6 +11,7 @@ export const useStockData = (searchTicker, useTestData) => {
     rsiValues: [],
     optionData: null,
     putCallRatio: null,
+    putCallRatioNear: null,
     financials: null,
     insiderActivity: null
   });
@@ -47,16 +49,16 @@ export const useStockData = (searchTicker, useTestData) => {
         }
         
         const rows = d?.data?.table?.rows || [];
-        let putVol = 0, callVol = 0;
-        rows.forEach(r => {
-          callVol += Number(r.c_Volume) || 0;
-          putVol += Number(r.p_Volume) || 0;
-        });
+        const nearestRows = getNearestExpiryRows(rows);
+
+        const putCallAll = calculatePutCallRatio(rows);
+        const putCallNear = calculatePutCallRatio(nearestRows);
 
         setData(prev => ({
           ...prev,
           optionData: d,
-          putCallRatio: callVol > 0 ? (putVol / callVol).toFixed(2) : null
+          putCallRatio: putCallAll !== null ? putCallAll.toFixed(2) : null,
+          putCallRatioNear: putCallNear !== null ? putCallNear.toFixed(2) : null
         }));
       } catch (e) { console.error(e); }
     };

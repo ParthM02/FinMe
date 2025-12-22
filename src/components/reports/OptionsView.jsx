@@ -10,7 +10,7 @@ import {
   Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { buildDeltaAsymmetry } from '../../optionAnalysis';
+import { buildDeltaAsymmetry, getNearestExpiryRows } from '../../optionAnalysis';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -23,13 +23,23 @@ const formatNumber = (value) => {
   return num.toFixed(0);
 };
 
-const OptionsView = ({ putCallRatio, optionData, underlyingPrice }) => {
+const OptionsView = ({ putCallRatio, putCallRatioNear, optionData, underlyingPrice }) => {
   const ratioValue = putCallRatio !== null ? Number(putCallRatio) : null;
+  const ratioValueNear = putCallRatioNear !== null ? Number(putCallRatioNear) : null;
+
   const ratioSignal = ratioValue === null
     ? { label: 'Loading', cls: 'neutral' }
     : ratioValue > 1
       ? { label: 'Bearish', cls: 'bearish' }
       : ratioValue < 0.8
+        ? { label: 'Bullish', cls: 'bullish' }
+        : { label: 'Neutral', cls: 'neutral' };
+
+  const ratioSignalNear = ratioValueNear === null
+    ? { label: 'Loading', cls: 'neutral' }
+    : ratioValueNear > 1
+      ? { label: 'Bearish', cls: 'bearish' }
+      : ratioValueNear < 0.8
         ? { label: 'Bullish', cls: 'bullish' }
         : { label: 'Neutral', cls: 'neutral' };
 
@@ -59,22 +69,31 @@ const OptionsView = ({ putCallRatio, optionData, underlyingPrice }) => {
     return null;
   }, [optionData, underlyingPrice]);
 
+  const nearestRows = useMemo(() => {
+    const rows = optionData?.data?.table?.rows || [];
+    return getNearestExpiryRows(rows);
+  }, [optionData]);
+
   const deltaAsymmetry = useMemo(() => {
     const rows = optionData?.data?.table?.rows || [];
     return buildDeltaAsymmetry(rows, spot, 10);
   }, [optionData, spot]);
 
-  const deltaChart = useMemo(() => {
-    if (!spot || !deltaAsymmetry || deltaAsymmetry.status === 'unavailable') return null;
-    const distance = deltaAsymmetry.otmDistance ?? 10;
+  const deltaAsymmetryNear = useMemo(() => {
+    return buildDeltaAsymmetry(nearestRows, spot, 10);
+  }, [nearestRows, spot]);
+
+  const buildConeChart = (asymmetry) => {
+    if (!spot || !asymmetry || asymmetry.status === 'unavailable') return null;
+    const distance = asymmetry.otmDistance ?? 10;
     const labels = [
       `-${distance} OTM`,
       'Spot',
       `+${distance} OTM`
     ];
 
-    const callDelta = deltaAsymmetry.callDelta ?? 0;
-    const putDelta = deltaAsymmetry.putDelta ?? 0;
+    const callDelta = asymmetry.callDelta ?? 0;
+    const putDelta = asymmetry.putDelta ?? 0;
 
     return {
       labels,
@@ -99,7 +118,10 @@ const OptionsView = ({ putCallRatio, optionData, underlyingPrice }) => {
         }
       ]
     };
-  }, [deltaAsymmetry, spot]);
+  };
+
+  const deltaChart = useMemo(() => buildConeChart(deltaAsymmetry), [deltaAsymmetry, spot]);
+  const deltaChartNear = useMemo(() => buildConeChart(deltaAsymmetryNear), [deltaAsymmetryNear, spot]);
 
   const deltaChartOptions = {
     responsive: true,
@@ -138,7 +160,7 @@ const OptionsView = ({ putCallRatio, optionData, underlyingPrice }) => {
       <div className="financial-ratios-section">
         <div className="financial-ratios-header">
           <div>
-            <div className="financial-ratios-title">Options Positioning</div>
+            <div className="financial-ratios-title">Options Positioning (All expiries)</div>
             <div className="financial-ratios-subtitle">Put/call momentum & volume mix</div>
           </div>
         </div>
@@ -146,7 +168,7 @@ const OptionsView = ({ putCallRatio, optionData, underlyingPrice }) => {
           <div className="ratio-widget">
             <div className="ratio-widget-header">
               <div>
-                <div className="ratio-widget-metric">Put / Call Ratio</div>
+                <div className="ratio-widget-metric">Put / Call Ratio (All)</div>
                 <div className="ratio-widget-category">Intraday sentiment</div>
               </div>
               <div className={`ratio-trend ${ratioSignal.cls}`}>
@@ -205,12 +227,38 @@ const OptionsView = ({ putCallRatio, optionData, underlyingPrice }) => {
               </div>
             </div>
           </div>
+          <div className="ratio-widget">
+            <div className="ratio-widget-header">
+              <div>
+                <div className="ratio-widget-metric">Put / Call Ratio (Nearest)</div>
+                <div className="ratio-widget-category">Approaching expiry focus</div>
+              </div>
+              <div className={`ratio-trend ${ratioSignalNear.cls}`}>
+                {ratioSignalNear.label}
+              </div>
+            </div>
+            <div className="ratio-widget-value">
+              {ratioValueNear !== null ? ratioValueNear.toFixed(2) : '—'}
+            </div>
+            <div className="options-meter">
+              <div className="options-meter-track">
+                <div
+                  className="options-meter-fill"
+                  style={{ width: `${Math.max(0, Math.min(ratioValueNear ?? 0, 2)) / 2 * 100}%` }}
+                />
+              </div>
+              <div className="options-meter-labels">
+                <span>Bullish</span>
+                <span>Bearish</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div className="financial-ratios-section">
         <div className="financial-ratios-header">
           <div>
-            <div className="financial-ratios-title">Options Implied Probabilities</div>
+            <div className="financial-ratios-title">Options Implied Probabilities (All)</div>
             <div className="financial-ratios-subtitle">Delta-based probability cone</div>
           </div>
         </div>
@@ -218,7 +266,7 @@ const OptionsView = ({ putCallRatio, optionData, underlyingPrice }) => {
           <div className="ratio-widget">
             <div className="ratio-widget-header">
               <div>
-                <div className="ratio-widget-metric">Delta Method</div>
+                <div className="ratio-widget-metric">Delta Method (All)</div>
                 <div className="ratio-widget-category">Equidistant call vs put</div>
               </div>
               <div className={`ratio-trend ${deltaAsymmetry.signalClass || 'neutral'}`}>
@@ -238,6 +286,34 @@ const OptionsView = ({ putCallRatio, optionData, underlyingPrice }) => {
             <div className="options-delta-chart">
               {deltaChart ? (
                 <Line data={deltaChart} options={deltaChartOptions} height={120} />
+              ) : (
+                <div className="ratio-loading">Waiting for option chain...</div>
+              )}
+            </div>
+          </div>
+          <div className="ratio-widget">
+            <div className="ratio-widget-header">
+              <div>
+                <div className="ratio-widget-metric">Delta Method (Nearest)</div>
+                <div className="ratio-widget-category">Approaching expiry</div>
+              </div>
+              <div className={`ratio-trend ${deltaAsymmetryNear.signalClass || 'neutral'}`}>
+                {deltaAsymmetryNear.signal || 'Pending'}
+              </div>
+            </div>
+            <div className="ratio-widget-value">
+              {deltaAsymmetryNear.callDelta !== null && deltaAsymmetryNear.putDelta !== null
+                ? `${(deltaAsymmetryNear.callDelta ?? 0).toFixed(2)} / ${(deltaAsymmetryNear.putDelta ?? 0).toFixed(2)}`
+                : '—'}
+            </div>
+            <div className="ratio-widget-footnote">
+              {spot
+                ? `Nearest expiry ±${deltaAsymmetryNear.otmDistance || 10} around $${spot.toFixed(2)}`
+                : 'Waiting for price'}
+            </div>
+            <div className="options-delta-chart">
+              {deltaChartNear ? (
+                <Line data={deltaChartNear} options={deltaChartOptions} height={120} />
               ) : (
                 <div className="ratio-loading">Waiting for option chain...</div>
               )}

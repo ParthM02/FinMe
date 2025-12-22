@@ -11,6 +11,35 @@ export function calculatePutCallRatio(optionRows) {
   return totalCallVolume === 0 ? null : totalPutVolume / totalCallVolume;
 }
 
+export function getNearestExpiryRows(optionRows) {
+    if (!Array.isArray(optionRows) || optionRows.length === 0) return [];
+
+    const groups = [];
+    let currentGroup = null;
+
+    optionRows.forEach((row) => {
+        if (typeof row.expirygroup === 'string' && row.expirygroup.trim()) {
+            const parsed = Date.parse(row.expirygroup);
+            if (!Number.isNaN(parsed)) {
+                currentGroup = {
+                    key: row.expirygroup.trim(),
+                    date: parsed,
+                    rows: []
+                };
+                groups.push(currentGroup);
+            }
+        }
+
+        if (currentGroup) {
+            currentGroup.rows.push(row);
+        }
+    });
+
+    if (!groups.length) return [];
+    const nearest = groups.reduce((best, g) => (g.date < best.date ? g : best), groups[0]);
+    return nearest.rows || [];
+}
+
 function phi(x) {
     //std normal pdf
     return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
