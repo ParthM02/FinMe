@@ -288,7 +288,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
             <div className="financial-ratios-title">Options Implied Probabilities</div>
             <div className="financial-ratios-subtitle">Nearest vs furthest expiration</div>
             <div className="ratio-supplement">
-              Delta Method is best for a model-based probability proxy (uses implied volatility). Midpoint/Premium Method is best for directional bias (uses relative call vs put pricing). These are market-implied signals, not guarantees.
+              Delta Method uses option delta (from implied volatility) as a probability proxy. Midpoint/Premium Method explains what the market is charging for a symmetric upside+downside bet. These are market-implied signals, not guarantees.
             </div>
           </div>
         </div>
@@ -314,7 +314,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 : 'Waiting for price'}
             </div>
             <div className="ratio-supplement">
-              Best for: probability proxy. Numbers are |Δ| for the call/put at symmetric strikes; higher call vs put suggests upside skew. Expires in ~{formatTimeToExpiry(deltaAsymmetryNear.timeToExpiry) || '—'}.
+              Meaning: this shows |Δ| for the +{deltaAsymmetryNear.otmDistance || 10} call / -{deltaAsymmetryNear.otmDistance || 10} put.
+              Example: 0.33 / 0.28 means the +OTM call has ~0.33 delta magnitude while the -OTM put has ~0.28; higher first number suggests relatively more upside sensitivity priced than downside.
+              Note: delta is a sensitivity-based proxy, not a literal probability. Expires in ~{formatTimeToExpiry(deltaAsymmetryNear.timeToExpiry) || '—'}.
             </div>
             <div className="options-delta-chart">
               {deltaChartNear ? (
@@ -350,7 +352,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 : 'Target: —'}
             </div>
             <div className="ratio-supplement">
-              Best for: directional bias. “Cost” is call + put premium at symmetric strikes (a strangle), roughly the priced-in move. Expires in ~{formatTimeToExpiry(premiumForecastNear.timeToExpiry) || '—'}.
+              Cost: call mid + put mid at symmetric strikes (a strangle). It’s quoted per share (roughly ×100 per contract).
+              Bias: callPremium / (callPremium + putPremium). Example: 60% means ~60% of the total premium is in calls (calls are richer vs puts at these strikes).
+              Target: premium-weighted “tilt” level = (callPremium·upStrike + putPremium·downStrike) / (callPremium + putPremium) — a center-of-mass, not a price forecast. Expires in ~{formatTimeToExpiry(premiumForecastNear.timeToExpiry) || '—'}.
             </div>
           </div>
           <div className="ratio-widget">
@@ -374,7 +378,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 : 'Waiting for price'}
             </div>
             <div className="ratio-supplement">
-              Best for: probability proxy. Numbers are |Δ| for the call/put at symmetric strikes; higher call vs put suggests upside skew. Expires in ~{formatTimeToExpiry(deltaAsymmetry.timeToExpiry) || '—'}.
+              Meaning: this shows |Δ| for the +{deltaAsymmetry.otmDistance || 10} call / -{deltaAsymmetry.otmDistance || 10} put.
+              Higher first number suggests relatively more upside sensitivity priced than downside; higher second number suggests the opposite.
+              Note: delta is a sensitivity-based proxy, not a literal probability. Expires in ~{formatTimeToExpiry(deltaAsymmetry.timeToExpiry) || '—'}.
             </div>
             <div className="options-delta-chart">
               {deltaChart ? (
@@ -410,7 +416,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 : 'Target: —'}
             </div>
             <div className="ratio-supplement">
-              Best for: directional bias. “Cost” is call + put premium at symmetric strikes (a strangle), roughly the priced-in move. Expires in ~{formatTimeToExpiry(premiumForecastFar.timeToExpiry) || '—'}.
+              Cost: call mid + put mid at symmetric strikes (a strangle). It’s quoted per share (roughly ×100 per contract).
+              Bias: callPremium / (callPremium + putPremium). Higher % = calls richer; lower % = puts richer.
+              Target: premium-weighted “tilt” level = (callPremium·upStrike + putPremium·downStrike) / (callPremium + putPremium) — a center-of-mass, not a price forecast. Expires in ~{formatTimeToExpiry(premiumForecastFar.timeToExpiry) || '—'}.
             </div>
           </div>
         </div>
