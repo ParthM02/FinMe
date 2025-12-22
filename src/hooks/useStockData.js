@@ -19,11 +19,26 @@ export const useStockData = (searchTicker, useTestData) => {
 
   useEffect(() => {
     if (!searchTicker) return;
+
+    // Clear option-specific fields immediately so the UI doesn't show stale chains
+    // while a new symbol is loading.
+    setData(prev => ({
+      ...prev,
+      optionData: null,
+      putCallRatio: null,
+      putCallRatioFar: null,
+      putCallRatioNear: null
+    }));
+
+    const controller = new AbortController();
+    const { signal } = controller;
+    const symbol = encodeURIComponent(searchTicker);
     
     const fetchGeneralData = async () => {
       try {
-        const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
+        const response = await fetch(`/api/stockdata?ticker=${symbol}`, { signal });
         const d = await response.json();
+        if (signal.aborted) return;
         setData(prev => ({
           ...prev,
           vwap: d.vwap ?? null,
@@ -42,12 +57,15 @@ export const useStockData = (searchTicker, useTestData) => {
       try {
         let d;
         if (useTestData) {
-          const res = await fetch('/testdata.json');
+          const res = await fetch('/testdata.json', { signal });
           d = await res.json();
         } else {
-          const res = await fetch(`/api/optiondata?symbol=${searchTicker}`);
+          // Cache-bust to avoid any intermediary caching of option chains.
+          const res = await fetch(`/api/optiondata?symbol=${symbol}&_=${Date.now()}`, { signal });
           d = await res.json();
         }
+
+        if (signal.aborted) return;
         
         const rows = d?.data?.table?.rows || [];
         const nearestRows = getNearestExpiryRows(rows);
@@ -63,11 +81,23 @@ export const useStockData = (searchTicker, useTestData) => {
           putCallRatioFar: putCallFar !== null ? putCallFar.toFixed(2) : null,
           putCallRatioNear: putCallNear !== null ? putCallNear.toFixed(2) : null
         }));
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        if (signal.aborted) return;
+        console.error(e);
+        setData(prev => ({
+          ...prev,
+          optionData: null,
+          putCallRatio: null,
+          putCallRatioFar: null,
+          putCallRatioNear: null
+        }));
+      }
     };
 
     fetchGeneralData();
     fetchOptions();
+
+    return () => controller.abort();
   }, [searchTicker, useTestData]);
 
   return data;

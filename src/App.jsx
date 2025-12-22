@@ -25,7 +25,15 @@ const App = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (!ticker || cooldownActive) return;
-    setSearchTicker(ticker);
+    const next = ticker.trim().toUpperCase();
+    if (!next) return;
+    // Allow refreshing the same symbol after cooldown.
+    if (next === searchTicker) {
+      setSearchTicker('');
+      setTimeout(() => setSearchTicker(next), 0);
+    } else {
+      setSearchTicker(next);
+    }
     startCooldown();
   };
 

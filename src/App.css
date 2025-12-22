@@ -593,6 +593,7 @@ body {
   font-size: 0.8rem;
   color: #6b7280;
   margin: 0.75rem 0 0;
+  white-space: pre-line;
 }
 
 .short-interest-grid {

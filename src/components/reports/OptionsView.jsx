@@ -154,6 +154,47 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
   const deltaChart = useMemo(() => buildConeChart(spot, deltaAsymmetry), [deltaAsymmetry, spot]);
   const deltaChartNear = useMemo(() => buildConeChart(spot, deltaAsymmetryNear), [deltaAsymmetryNear, spot]);
 
+  const deltaNearExplain = useMemo(() => {
+    const dist = deltaAsymmetryNear?.otmDistance || 10;
+    const expiry = formatTimeToExpiry(deltaAsymmetryNear?.timeToExpiry) || '—';
+    return (
+      `Meaning: this shows |Δ| for the +${dist} call / -${dist} put (same distance from spot).\n` +
+      'Example: 0.33 / 0.28 means the call has ~0.33 delta magnitude while the put has ~0.28.\n' +
+      'Interpretation: higher first number suggests relatively more upside sensitivity priced than downside at these strikes.\n' +
+      `Note: delta is a sensitivity-based proxy, not a literal probability. Expires in ~${expiry}.`
+    );
+  }, [deltaAsymmetryNear?.otmDistance, deltaAsymmetryNear?.timeToExpiry]);
+
+  const deltaFarExplain = useMemo(() => {
+    const dist = deltaAsymmetry?.otmDistance || 10;
+    const expiry = formatTimeToExpiry(deltaAsymmetry?.timeToExpiry) || '—';
+    return (
+      `Meaning: this shows |Δ| for the +${dist} call / -${dist} put (same distance from spot).\n` +
+      'Interpretation: higher call |Δ| suggests relatively more upside sensitivity priced; higher put |Δ| suggests relatively more downside sensitivity priced.\n' +
+      `Note: delta is a sensitivity-based proxy, not a literal probability. Expires in ~${expiry}.`
+    );
+  }, [deltaAsymmetry?.otmDistance, deltaAsymmetry?.timeToExpiry]);
+
+  const premiumNearExplain = useMemo(() => {
+    const expiry = formatTimeToExpiry(premiumForecastNear?.timeToExpiry) || '—';
+    return (
+      'Cost: call mid + put mid at symmetric strikes (a strangle). Quoted per share (roughly ×100 per contract).\n' +
+      'Bias: callPremium / (callPremium + putPremium). Example: 60% means ~60% of the total premium is in calls (calls are richer vs puts at these strikes).\n' +
+      'Target: premium-weighted “tilt” level = (callPremium·upStrike + putPremium·downStrike) / (callPremium + putPremium) — a center-of-mass, not a price forecast.\n' +
+      `Expires in ~${expiry}.`
+    );
+  }, [premiumForecastNear?.timeToExpiry]);
+
+  const premiumFarExplain = useMemo(() => {
+    const expiry = formatTimeToExpiry(premiumForecastFar?.timeToExpiry) || '—';
+    return (
+      'Cost: call mid + put mid at symmetric strikes (a strangle). Quoted per share (roughly ×100 per contract).\n' +
+      'Bias: callPremium / (callPremium + putPremium). Higher % = calls richer; lower % = puts richer.\n' +
+      'Target: premium-weighted “tilt” level = (callPremium·upStrike + putPremium·downStrike) / (callPremium + putPremium) — a center-of-mass, not a price forecast.\n' +
+      `Expires in ~${expiry}.`
+    );
+  }, [premiumForecastFar?.timeToExpiry]);
+
   const deltaChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -314,9 +355,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 : 'Waiting for price'}
             </div>
             <div className="ratio-supplement">
-              Meaning: this shows |Δ| for the +{deltaAsymmetryNear.otmDistance || 10} call / -{deltaAsymmetryNear.otmDistance || 10} put.\n
-              Example: 0.33 / 0.28 means the +OTM call has ~0.33 delta magnitude while the -OTM put has ~0.28; higher first number suggests relatively more upside sensitivity priced than downside.\n
-              Note: delta is a sensitivity-based proxy, not a literal probability. Expires in ~{formatTimeToExpiry(deltaAsymmetryNear.timeToExpiry) || '—'}.\n
+              {deltaNearExplain}
             </div>
             <div className="options-delta-chart">
               {deltaChartNear ? (
@@ -352,9 +391,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 : 'Target: —'}
             </div>
             <div className="ratio-supplement">
-              Cost: call mid + put mid at symmetric strikes (a strangle). It’s quoted per share (roughly ×100 per contract).\n
-              Bias: callPremium / (callPremium + putPremium). Example: 60% means ~60% of the total premium is in calls (calls are richer vs puts at these strikes).\n
-              Target: premium-weighted “tilt” level = (callPremium·upStrike + putPremium·downStrike) / (callPremium + putPremium) — a center-of-mass, not a price forecast. Expires in ~{formatTimeToExpiry(premiumForecastNear.timeToExpiry) || '—'}.
+              {premiumNearExplain}
             </div>
           </div>
           <div className="ratio-widget">
@@ -378,9 +415,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 : 'Waiting for price'}
             </div>
             <div className="ratio-supplement">
-              Meaning: this shows |Δ| for the +{deltaAsymmetry.otmDistance || 10} call / -{deltaAsymmetry.otmDistance || 10} put.\n
-              Higher first number suggests relatively more upside sensitivity priced than downside; higher second number suggests the opposite.\n
-              Note: delta is a sensitivity-based proxy, not a literal probability. Expires in ~{formatTimeToExpiry(deltaAsymmetry.timeToExpiry) || '—'}.
+              {deltaFarExplain}
             </div>
             <div className="options-delta-chart">
               {deltaChart ? (
@@ -416,9 +451,7 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 : 'Target: —'}
             </div>
             <div className="ratio-supplement">
-              Cost: call mid + put mid at symmetric strikes (a strangle). It’s quoted per share (roughly ×100 per contract).\n
-              Bias: callPremium / (callPremium + putPremium). Higher % = calls richer; lower % = puts richer.\n
-              Target: premium-weighted “tilt” level = (callPremium·upStrike + putPremium·downStrike) / (callPremium + putPremium) — a center-of-mass, not a price forecast. Expires in ~{formatTimeToExpiry(premiumForecastFar.timeToExpiry) || '—'}.
+              {premiumFarExplain}
             </div>
           </div>
         </div>
