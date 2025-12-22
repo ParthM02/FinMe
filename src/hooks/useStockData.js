@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { calculatePutCallRatio, getNearestExpiryRows } from '../optionAnalysis';
+import { calculatePutCallRatio, getNearestExpiryRows, getFurthestExpiryRows } from '../optionAnalysis';
 
 export const useStockData = (searchTicker, useTestData) => {
   const [data, setData] = useState({
@@ -11,6 +11,7 @@ export const useStockData = (searchTicker, useTestData) => {
     rsiValues: [],
     optionData: null,
     putCallRatio: null,
+    putCallRatioFar: null,
     putCallRatioNear: null,
     financials: null,
     insiderActivity: null
@@ -50,14 +51,16 @@ export const useStockData = (searchTicker, useTestData) => {
         
         const rows = d?.data?.table?.rows || [];
         const nearestRows = getNearestExpiryRows(rows);
+        const furthestRows = getFurthestExpiryRows(rows);
 
-        const putCallAll = calculatePutCallRatio(rows);
         const putCallNear = calculatePutCallRatio(nearestRows);
+        const putCallFar = calculatePutCallRatio(furthestRows);
 
         setData(prev => ({
           ...prev,
           optionData: d,
-          putCallRatio: putCallAll !== null ? putCallAll.toFixed(2) : null,
+          putCallRatio: putCallFar !== null ? putCallFar.toFixed(2) : null,
+          putCallRatioFar: putCallFar !== null ? putCallFar.toFixed(2) : null,
           putCallRatioNear: putCallNear !== null ? putCallNear.toFixed(2) : null
         }));
       } catch (e) { console.error(e); }

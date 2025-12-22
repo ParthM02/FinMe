@@ -69,6 +69,13 @@ export function getFurthestExpiryRows(optionRows) {
     return furthest.rows || [];
 }
 
+export function formatExpiryLabel(rows) {
+    const date = parseExpiryDateFromRows(rows);
+    if (!date) return 'N/A';
+    const opts = { month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', opts);
+}
+
 function phi(x) {
     //std normal pdf
     return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);

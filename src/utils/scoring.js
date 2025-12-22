@@ -1,5 +1,6 @@
 import { isUptrendByRSI, rsiCrossoverSignal, rsiOverboughtOversoldSignal } from '../technicalAnalysis';
 import { getPopularSentiment, extractFinancialRatios, buildInsiderActivityCards, buildInstitutionalActivityCards } from './helpers';
+import { buildDeltaAsymmetry, getNearestExpiryRows, getFurthestExpiryRows } from '../optionAnalysis';
 
 const MAX_RATIO_METRICS = 6;
 const SCORE = { bullish: 100, neutral: 50, bearish: 0 };
@@ -18,12 +19,29 @@ const scoreFromDtcValue = (dtc) => {
   return SCORE.bearish;
 };
 
+const scoreFromRatio = (ratio) => {
+  if (ratio === null || ratio === undefined) return null;
+  if (ratio > 1) return SCORE.bearish;
+  if (ratio < 0.8) return SCORE.bullish;
+  return SCORE.neutral;
+};
+
+const scoreFromSignal = (signalClass) => {
+  if (!signalClass) return null;
+  if (signalClass === 'bullish') return SCORE.bullish;
+  if (signalClass === 'bearish') return SCORE.bearish;
+  return SCORE.neutral;
+};
+
 export const calculateAllScores = ({
   shortInterest,
   vwap,
   close,
   rsiValues,
   putCallRatio,
+  putCallRatioFar,
+  putCallRatioNear,
+  optionData,
   headlines,
   institutionalSummary,
   financials,
@@ -68,7 +86,35 @@ export const calculateAllScores = ({
   }
 
   // Options Score
-  if (putCallRatio !== null) scores.Options = putCallRatio > 1 ? 0 : 100;
+  const optionComponents = [];
+
+  const nearRatioScore = scoreFromRatio(putCallRatioNear ?? null);
+  if (nearRatioScore !== null) optionComponents.push(nearRatioScore);
+
+  const farRatioValue = putCallRatioFar ?? putCallRatio;
+  const farRatioScore = scoreFromRatio(farRatioValue ?? null);
+  if (farRatioScore !== null) optionComponents.push(farRatioScore);
+
+  const rows = optionData?.data?.table?.rows || [];
+  const nearestRows = getNearestExpiryRows(rows);
+  const furthestRows = getFurthestExpiryRows(rows);
+
+  const deltaNear = buildDeltaAsymmetry(nearestRows, close, 10);
+  if (deltaNear?.status === 'ready') {
+    const s = scoreFromSignal(deltaNear.signalClass);
+    if (s !== null) optionComponents.push(s);
+  }
+
+  const deltaFar = buildDeltaAsymmetry(furthestRows, close, 10);
+  if (deltaFar?.status === 'ready') {
+    const s = scoreFromSignal(deltaFar.signalClass);
+    if (s !== null) optionComponents.push(s);
+  }
+
+  if (optionComponents.length) {
+    const total = optionComponents.reduce((sum, score) => sum + score, 0);
+    scores.Options = Math.round(total / optionComponents.length);
+  }
 
   // Sentiment Score
   const sentimentComponents = [];

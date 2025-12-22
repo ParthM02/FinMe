@@ -17,6 +17,7 @@ const ReportSection = ({ activeTab, stockData }) => {
       case 'Options': return (
         <OptionsView
           putCallRatio={stockData.putCallRatio}
+          putCallRatioFar={stockData.putCallRatioFar}
           putCallRatioNear={stockData.putCallRatioNear}
           optionData={stockData.optionData}
           underlyingPrice={stockData.close}
