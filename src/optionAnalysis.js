@@ -286,6 +286,71 @@ export function buildDeltaAsymmetry(optionRows, spotPrice, otmDistance = 10) {
     };
 }
 
+export function buildPremiumSkew(optionRows, spotPrice, otmDistance = 10) {
+    if (!spotPrice || !Array.isArray(optionRows)) {
+        return { status: 'unavailable' };
+    }
+
+    const findClosestRow = (targetStrike) => {
+        return optionRows.reduce((best, row) => {
+            const strike = parseNumeric(row?.strike);
+            if (strike === null) return best;
+            const diff = Math.abs(strike - targetStrike);
+            if (diff < best.diff) {
+                return { diff, row };
+            }
+            return best;
+        }, { diff: Infinity, row: null }).row;
+    };
+
+    const callRow = findClosestRow(spotPrice + otmDistance);
+    const putRow = findClosestRow(spotPrice - otmDistance);
+
+    const callPremium = midPrice(callRow, 'call');
+    const putPremium = midPrice(putRow, 'put');
+
+    if (callPremium === null || putPremium === null) {
+        return {
+          status: 'pending',
+          callPremium,
+          putPremium,
+          strikes: {
+            call: parseNumeric(callRow?.strike),
+            put: parseNumeric(putRow?.strike)
+          },
+          otmDistance
+        };
+    }
+
+    const avg = Math.max(1e-6, (callPremium + putPremium) / 2);
+    const diff = callPremium - putPremium;
+    const tolerance = 0.05 * avg; // 5% of average premium
+
+    let signal = 'Neutral';
+    let signalClass = 'neutral';
+    if (diff > tolerance) {
+        signal = 'Bullish';
+        signalClass = 'bullish';
+    } else if (-diff > tolerance) {
+        signal = 'Bearish';
+        signalClass = 'bearish';
+    }
+
+    return {
+        status: 'ready',
+        signal,
+        signalClass,
+        callPremium,
+        putPremium,
+        strikes: {
+            call: parseNumeric(callRow?.strike),
+            put: parseNumeric(putRow?.strike)
+        },
+        otmDistance,
+        timeToExpiry: getTimeToExpiryYears(optionRows)
+    };
+}
+
 function intrinsicValue(S, K, optionType = 'call') {
     if (optionType === 'call') {
         return Math.max(S - K, 0);

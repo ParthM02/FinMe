@@ -10,7 +10,7 @@ import {
   Legend
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { buildDeltaAsymmetry, getNearestExpiryGroup, getFurthestExpiryGroup, formatExpiryLabel } from '../../optionAnalysis';
+import { buildDeltaAsymmetry, buildPremiumSkew, getNearestExpiryGroup, getFurthestExpiryGroup, formatExpiryLabel } from '../../optionAnalysis';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -111,6 +111,9 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
   const deltaAsymmetryNear = useMemo(() => {
     return buildDeltaAsymmetry(nearestRows, spot, 10);
   }, [nearestRows, spot]);
+
+  const premiumSkewNear = useMemo(() => buildPremiumSkew(nearestRows, spot, 10), [nearestRows, spot]);
+  const premiumSkewFar = useMemo(() => buildPremiumSkew(furthestRows, spot, 10), [furthestRows, spot]);
 
   const buildConeChart = (asymmetry) => {
     if (!spot || !asymmetry || asymmetry.status === 'unavailable') return null;
@@ -342,6 +345,82 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
               ) : (
                 <div className="ratio-loading">Waiting for option chain...</div>
               )}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="financial-ratios-section">
+        <div className="financial-ratios-header">
+          <div>
+            <div className="financial-ratios-title">Options Premium Skew</div>
+            <div className="financial-ratios-subtitle">Midpoint/Premium method (risk reversal)</div>
+          </div>
+        </div>
+        <div className="financial-ratios-grid options-grid">
+          <div className="ratio-widget">
+            <div className="ratio-widget-header">
+              <div>
+                <div className="ratio-widget-metric">Midpoint/Premium (Nearest)</div>
+                <div className="ratio-widget-category">Nearest expiration {nearestLabel}</div>
+              </div>
+              <div className={`ratio-trend ${premiumSkewNear.signalClass || 'neutral'}`}>
+                {premiumSkewNear.signal || 'Pending'}
+              </div>
+            </div>
+            <div className="ratio-widget-value">
+              {premiumSkewNear.callPremium !== null && premiumSkewNear.putPremium !== null
+                ? `${(premiumSkewNear.callPremium ?? 0).toFixed(2)} / ${(premiumSkewNear.putPremium ?? 0).toFixed(2)}`
+                : '—'}
+            </div>
+            <div className="options-meter">
+              <div className="options-meter-track">
+                <div
+                  className="options-meter-fill"
+                  style={{ width: `${Math.max(0, Math.min(premiumSkewNear.callPremium && premiumSkewNear.putPremium ? (premiumSkewNear.callPremium / Math.max(1e-6, premiumSkewNear.callPremium + premiumSkewNear.putPremium)) * 100 : 50, 100))}%` }}
+                />
+              </div>
+              <div className="options-meter-labels">
+                <span>Call Premium</span>
+                <span>Put Premium</span>
+              </div>
+            </div>
+            <div className="ratio-widget-footnote">
+              {spot
+                ? `Nearest expiry ±${premiumSkewNear.otmDistance || 10} around $${spot.toFixed(2)} | Strikes ${premiumSkewNear.strikes?.put ?? '—'} / ${premiumSkewNear.strikes?.call ?? '—'}`
+                : 'Waiting for price'}
+            </div>
+          </div>
+          <div className="ratio-widget">
+            <div className="ratio-widget-header">
+              <div>
+                <div className="ratio-widget-metric">Midpoint/Premium (Furthest)</div>
+                <div className="ratio-widget-category">Furthest expiration {furthestLabel}</div>
+              </div>
+              <div className={`ratio-trend ${premiumSkewFar.signalClass || 'neutral'}`}>
+                {premiumSkewFar.signal || 'Pending'}
+              </div>
+            </div>
+            <div className="ratio-widget-value">
+              {premiumSkewFar.callPremium !== null && premiumSkewFar.putPremium !== null
+                ? `${(premiumSkewFar.callPremium ?? 0).toFixed(2)} / ${(premiumSkewFar.putPremium ?? 0).toFixed(2)}`
+                : '—'}
+            </div>
+            <div className="options-meter">
+              <div className="options-meter-track">
+                <div
+                  className="options-meter-fill"
+                  style={{ width: `${Math.max(0, Math.min(premiumSkewFar.callPremium && premiumSkewFar.putPremium ? (premiumSkewFar.callPremium / Math.max(1e-6, premiumSkewFar.callPremium + premiumSkewFar.putPremium)) * 100 : 50, 100))}%` }}
+                />
+              </div>
+              <div className="options-meter-labels">
+                <span>Call Premium</span>
+                <span>Put Premium</span>
+              </div>
+            </div>
+            <div className="ratio-widget-footnote">
+              {spot
+                ? `Furthest expiry ±${premiumSkewFar.otmDistance || 10} around $${spot.toFixed(2)} | Strikes ${premiumSkewFar.strikes?.put ?? '—'} / ${premiumSkewFar.strikes?.call ?? '—'}`
+                : 'Waiting for price'}
             </div>
           </div>
         </div>
