@@ -119,7 +119,6 @@ export function bsPrice( S, K, T, r, q, sigma, optionType = 'call') {
 
 export function bsGreeks(S, K, T, r, q, sigma, optionType = 'call') {
     if ( T <= 0) {
-        const intrinsic = optionType === 'call' ? Math.max(S - K, 0) : Math.max(K - S, 0);
         return {
             delta : optionType === 'call' ? (S > K ? 1 : 0) : (S < K ? -1 : 0),
             gamma : 0,
@@ -134,7 +133,12 @@ export function bsGreeks(S, K, T, r, q, sigma, optionType = 'call') {
     const d2 = d1 - sigma * sqrtT;
 
     const pdfD1 = phi(d1);
-    const delta = optionType === 'call' ? Math.exp(-q * T) * Phi(d1) : -Math.exp(-q * T) * (Phi(-d1) - 1);
+    // Black-Scholes delta with continuous dividend yield q
+    // Call:  e^{-qT} N(d1)
+    // Put:  -e^{-qT} N(-d1) = e^{-qT}(N(d1) - 1)
+    const delta = optionType === 'call'
+        ? Math.exp(-q * T) * Phi(d1)
+        : -Math.exp(-q * T) * Phi(-d1);
 
     const gamma = Math.exp(-q * T) * pdfD1 / (S * sigma * sqrtT);
 
