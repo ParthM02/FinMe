@@ -262,12 +262,19 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
                 <div className="ratio-widget-metric">Put / Call Ratio (Nearest)</div>
                 <div className="ratio-widget-category">Nearest expiration {nearestLabel}</div>
               </div>
+            <div className="ratio-widget-footnote">
+              {expiryNearText ? `Expires in ~${expiryNearText}` : 'Expires: —'}
+            </div>
               <div className={`ratio-trend ${ratioSignalNear.cls}`}>
                 {ratioSignalNear.label}
               </div>
             </div>
             <div className="ratio-widget-value">
               {ratioValueNear !== null ? ratioValueNear.toFixed(2) : '—'}
+                <div
+                  className="options-bias-segment bearish"
+                  style={{ width: `${Math.max(0, Math.min((1 - (premiumForecastNear.biasRatio ?? 0.5)) * 100, 100))}%` }}
+                />
             </div>
             <div className="options-meter">
               <div className="options-meter-track">
@@ -279,9 +286,6 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
               <div className="options-meter-labels">
                 <span>Bullish</span>
                 <span>Bearish</span>
-              </div>
-            </div>
-            <div className="options-volume-bars mini">
               <div className="options-volume-row">
                 <span>Calls</span>
                 <div className="options-volume-track">

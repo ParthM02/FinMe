@@ -862,6 +862,8 @@ body {
 
 .options-bias-segment {
   height: 100%;
+  display: block;
+  flex: none;
 }
 
 .options-bias-segment.bullish {
