@@ -34,11 +34,25 @@ export const useStockData = (searchTicker, useTestData) => {
     const { signal } = controller;
     const symbol = encodeURIComponent(searchTicker);
     
-    const fetchGeneralData = async () => {
+    const fetchAllData = async () => {
       try {
         const response = await fetch(`/api/stockdata?ticker=${symbol}`, { signal });
         const d = await response.json();
         if (signal.aborted) return;
+
+        let optionPayload = d.optionData ?? null;
+        if (useTestData) {
+          const res = await fetch('/testdata.json', { signal });
+          optionPayload = await res.json();
+        }
+
+        const rows = optionPayload?.data?.table?.rows || [];
+        const nearestRows = getNearestExpiryRows(rows);
+        const furthestRows = getFurthestExpiryRows(rows);
+
+        const putCallNear = calculatePutCallRatio(nearestRows);
+        const putCallFar = calculatePutCallRatio(furthestRows);
+
         setData(prev => ({
           ...prev,
           vwap: d.vwap ?? null,
@@ -48,35 +62,8 @@ export const useStockData = (searchTicker, useTestData) => {
           shortInterest: d.shortInterest || [],
           rsiValues: d.rsiValues || [],
           financials: d.financials || null,
-          insiderActivity: d.insiderActivity || null
-        }));
-      } catch (e) { console.error(e); }
-    };
-
-    const fetchOptions = async () => {
-      try {
-        let d;
-        if (useTestData) {
-          const res = await fetch('/testdata.json', { signal });
-          d = await res.json();
-        } else {
-          // Cache-bust to avoid any intermediary caching of option chains.
-          const res = await fetch(`/api/optiondata?symbol=${symbol}&_=${Date.now()}`, { signal });
-          d = await res.json();
-        }
-
-        if (signal.aborted) return;
-        
-        const rows = d?.data?.table?.rows || [];
-        const nearestRows = getNearestExpiryRows(rows);
-        const furthestRows = getFurthestExpiryRows(rows);
-
-        const putCallNear = calculatePutCallRatio(nearestRows);
-        const putCallFar = calculatePutCallRatio(furthestRows);
-
-        setData(prev => ({
-          ...prev,
-          optionData: d,
+          insiderActivity: d.insiderActivity || null,
+          optionData: optionPayload ?? null,
           putCallRatio: putCallFar !== null ? putCallFar.toFixed(2) : null,
           putCallRatioFar: putCallFar !== null ? putCallFar.toFixed(2) : null,
           putCallRatioNear: putCallNear !== null ? putCallNear.toFixed(2) : null
@@ -94,8 +81,7 @@ export const useStockData = (searchTicker, useTestData) => {
       }
     };
 
-    fetchGeneralData();
-    fetchOptions();
+    fetchAllData();
 
     return () => controller.abort();
   }, [searchTicker, useTestData]);

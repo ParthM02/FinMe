@@ -156,8 +156,9 @@ const App = () => {
           const response = await fetch('/testdata.json');
           data = await response.json();
         } else {
-          const response = await fetch(`/api/optiondata?symbol=${searchTicker}`);
-          data = await response.json();
+          const response = await fetch(`/api/stockdata?ticker=${searchTicker}`);
+          const payload = await response.json();
+          data = payload.optionData;
         }
         setOptionData(data);
 
