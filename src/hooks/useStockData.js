@@ -8,7 +8,8 @@ export const useStockData = (searchTicker, useTestData) => {
   const applyDataRef = useRef(null);
   const cachedResponseRef = useRef(null);
   const cachePromptVisibleRef = useRef(false);
-  const suppressCachePromptRef = useRef(false);
+  const decisionTickerRef = useRef(null);
+  const baselineUpdatedAtRef = useRef(null);
   const [data, setData] = useState({
     vwap: null,
     close: null,
@@ -58,7 +59,8 @@ export const useStockData = (searchTicker, useTestData) => {
       });
       cachedResponseRef.current = null;
       cachePromptVisibleRef.current = false;
-      suppressCachePromptRef.current = false;
+      decisionTickerRef.current = null;
+      baselineUpdatedAtRef.current = null;
       return;
     }
 
@@ -89,7 +91,8 @@ export const useStockData = (searchTicker, useTestData) => {
     });
     cachedResponseRef.current = null;
     cachePromptVisibleRef.current = false;
-    suppressCachePromptRef.current = false;
+    decisionTickerRef.current = null;
+    baselineUpdatedAtRef.current = null;
     
     const stopPolling = () => {
       if (pollTimerRef.current) {
@@ -162,12 +165,15 @@ export const useStockData = (searchTicker, useTestData) => {
         }
 
         if (response.status === 200 && d?.cached && d?.response) {
-          if (suppressCachePromptRef.current && !forceRefresh) {
-            await fetchAllData(true);
-            return;
-          }
-          if (suppressCachePromptRef.current && forceRefresh) {
-            suppressCachePromptRef.current = false;
+          const updatedAt = d.updated_at ?? null;
+
+          if (decisionTickerRef.current === searchTicker) {
+            if (baselineUpdatedAtRef.current && updatedAt && baselineUpdatedAtRef.current === updatedAt) {
+              if (!pollTimerRef.current) {
+                pollTimerRef.current = setInterval(fetchAllData, 15000);
+              }
+              return;
+            }
             d = d.response;
           } else {
             if (cachePromptVisibleRef.current) return;
@@ -175,7 +181,7 @@ export const useStockData = (searchTicker, useTestData) => {
             cachedResponseRef.current = d.response;
             setCachePrompt({
               isVisible: true,
-              updatedAt: d.updated_at ?? null
+              updatedAt: updatedAt
             });
             cachePromptVisibleRef.current = true;
             return;
@@ -191,7 +197,6 @@ export const useStockData = (searchTicker, useTestData) => {
           etaUpdatedAt: null
         });
 
-        suppressCachePromptRef.current = false;
         await applyData(d);
       } catch (e) {
         if (signal.aborted) return;
@@ -263,7 +268,8 @@ export const useStockData = (searchTicker, useTestData) => {
     setCachePrompt({ isVisible: false, updatedAt: null });
     cachedResponseRef.current = null;
     cachePromptVisibleRef.current = false;
-    suppressCachePromptRef.current = false;
+    decisionTickerRef.current = searchTicker;
+    baselineUpdatedAtRef.current = null;
     if (pollTimerRef.current) {
       clearInterval(pollTimerRef.current);
       pollTimerRef.current = null;
@@ -280,9 +286,10 @@ export const useStockData = (searchTicker, useTestData) => {
 
   const requestRefresh = () => {
     setCachePrompt({ isVisible: false, updatedAt: null });
+    baselineUpdatedAtRef.current = cachePrompt.updatedAt ?? null;
     cachedResponseRef.current = null;
     cachePromptVisibleRef.current = false;
-    suppressCachePromptRef.current = true;
+    decisionTickerRef.current = searchTicker;
     fetchRef.current?.(true);
   };
 
