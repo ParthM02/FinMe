@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const { data: cachedRows, error: cacheError } = await supabase
       .from(cacheTable)
       .select('response, updated_at')
-      .eq('params', symbol)
+      .eq('params->>ticker', symbol)
       .order('updated_at', { ascending: false })
       .limit(1);
 
