@@ -10,7 +10,7 @@ export const useStockData = (searchTicker, useTestData) => {
   const cachePromptVisibleRef = useRef(false);
   const decisionTickerRef = useRef(null);
   const baselineUpdatedAtRef = useRef(null);
-  const [data, setData] = useState({
+  const initialData = {
     vwap: null,
     close: null,
     headlines: [],
@@ -23,7 +23,8 @@ export const useStockData = (searchTicker, useTestData) => {
     putCallRatioNear: null,
     financials: null,
     insiderActivity: null
-  });
+  };
+  const [data, setData] = useState(initialData);
   const [queueInfo, setQueueInfo] = useState({
     isPending: false,
     queuePosition: null,
@@ -85,6 +86,7 @@ export const useStockData = (searchTicker, useTestData) => {
       etaRemainingSeconds: null,
       etaUpdatedAt: null
     });
+    setData(initialData);
     setCachePrompt({
       isVisible: false,
       updatedAt: null
