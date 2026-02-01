@@ -4,6 +4,7 @@ import crypto from 'crypto';
 export default async function handler(req, res) {
   const { ticker } = req.query;
   const symbol = ticker?.toUpperCase?.();
+  const forceRefresh = req.query?.force === 'true';
 
   if (!symbol) {
     return res.status(400).json({ error: 'Ticker is required.' });
@@ -25,23 +26,32 @@ export default async function handler(req, res) {
       auth: { persistSession: false }
     });
 
-    const { data: cachedRows, error: cacheError } = await supabase
-      .from(cacheTable)
-      .select('response, updated_at')
-      .eq('params', JSON.stringify(symbol))
-      .order('updated_at', { ascending: false })
-      .limit(1);
+    if (!forceRefresh) {
+      const { data: cachedRows, error: cacheError } = await supabase
+        .from(cacheTable)
+        .select('response, updated_at')
+        .eq('params', JSON.stringify(symbol))
+        .order('updated_at', { ascending: false })
+        .limit(1);
 
-    if (cacheError) {
-      throw cacheError;
-    }
+      if (cacheError) {
+        throw cacheError;
+      }
 
-    const cachedResponse = cachedRows?.[0]?.response ?? null;
-    if (cachedResponse) {
-      console.log(`Cache hit for ticker: ${symbol}`);
-      return res.status(200).json(cachedResponse);
+      const cachedResponse = cachedRows?.[0]?.response ?? null;
+      const cachedUpdatedAt = cachedRows?.[0]?.updated_at ?? null;
+      if (cachedResponse) {
+        console.log(`Cache hit for ticker: ${symbol}`);
+        return res.status(200).json({
+          cached: true,
+          updated_at: cachedUpdatedAt,
+          response: cachedResponse
+        });
+      }
+      console.log(`Cache miss for ticker: ${symbol}. Enqueuing request.`);
+    } else {
+      console.log(`Cache bypass for ticker: ${symbol}. Enqueuing request.`);
     }
-    console.log(`Cache miss for ticker: ${symbol}. Enqueuing request.`);
 
     const getQueuePosition = async (createdAt) => {
       const { count, error: countError } = await supabase

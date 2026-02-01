@@ -135,6 +135,84 @@ body {
     color: white;
 }
 
+/* Cache Prompt Modal */
+.cache-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.cache-modal {
+  width: min(32rem, 92vw);
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgb(31 41 55);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  color: #fff;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.cache-modal-header h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.cache-modal-header p {
+  margin: 0;
+  color: #cbd5f5;
+  font-size: 0.95rem;
+}
+
+.cache-modal-body {
+  margin-top: 1rem;
+  color: #d1d5db;
+}
+
+.cache-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.cache-btn {
+  border: none;
+  border-radius: 9999px;
+  padding: 0.6rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.2s ease;
+}
+
+.cache-btn:active {
+  transform: scale(0.98);
+}
+
+.cache-btn-secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: #e5e7eb;
+}
+
+.cache-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.cache-btn-primary {
+  background: #9333ea;
+  color: #fff;
+}
+
+.cache-btn-primary:hover {
+  background: #7e22ce;
+}
+
 /* Main Content & Grid */
 .main-content {
     padding: 0 1.5rem 1.5rem;

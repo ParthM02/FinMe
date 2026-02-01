@@ -4,6 +4,9 @@ import { calculatePutCallRatio, getNearestExpiryRows, getFurthestExpiryRows } fr
 export const useStockData = (searchTicker, useTestData) => {
   const pollTimerRef = useRef(null);
   const etaTimerRef = useRef(null);
+  const fetchRef = useRef(null);
+  const applyDataRef = useRef(null);
+  const cachedResponseRef = useRef(null);
   const [data, setData] = useState({
     vwap: null,
     close: null,
@@ -25,6 +28,10 @@ export const useStockData = (searchTicker, useTestData) => {
     etaRemainingSeconds: null,
     etaUpdatedAt: null
   });
+  const [cachePrompt, setCachePrompt] = useState({
+    isVisible: false,
+    updatedAt: null
+  });
 
   useEffect(() => {
     if (!searchTicker) {
@@ -43,6 +50,11 @@ export const useStockData = (searchTicker, useTestData) => {
         etaRemainingSeconds: null,
         etaUpdatedAt: null
       });
+      setCachePrompt({
+        isVisible: false,
+        updatedAt: null
+      });
+      cachedResponseRef.current = null;
       return;
     }
 
@@ -67,6 +79,11 @@ export const useStockData = (searchTicker, useTestData) => {
       etaRemainingSeconds: null,
       etaUpdatedAt: null
     });
+    setCachePrompt({
+      isVisible: false,
+      updatedAt: null
+    });
+    cachedResponseRef.current = null;
     
     const stopPolling = () => {
       if (pollTimerRef.current) {
@@ -75,10 +92,41 @@ export const useStockData = (searchTicker, useTestData) => {
       }
     };
 
-    const fetchAllData = async () => {
+    const applyData = async (payload) => {
+      let optionPayload = payload.optionData ?? null;
+      if (useTestData) {
+        const res = await fetch('/testdata.json', { signal });
+        optionPayload = await res.json();
+      }
+
+      const rows = optionPayload?.data?.table?.rows || [];
+      const nearestRows = getNearestExpiryRows(rows);
+      const furthestRows = getFurthestExpiryRows(rows);
+
+      const putCallNear = calculatePutCallRatio(nearestRows);
+      const putCallFar = calculatePutCallRatio(furthestRows);
+
+      setData(prev => ({
+        ...prev,
+        vwap: payload.vwap ?? null,
+        close: payload.close ?? null,
+        headlines: payload.headlines || [],
+        institutionalSummary: payload.institutionalSummary || null,
+        shortInterest: payload.shortInterest || [],
+        rsiValues: payload.rsiValues || [],
+        financials: payload.financials || null,
+        insiderActivity: payload.insiderActivity || null,
+        optionData: optionPayload ?? null,
+        putCallRatio: putCallFar !== null ? putCallFar.toFixed(2) : null,
+        putCallRatioFar: putCallFar !== null ? putCallFar.toFixed(2) : null,
+        putCallRatioNear: putCallNear !== null ? putCallNear.toFixed(2) : null
+      }));
+    };
+
+    const fetchAllData = async (forceRefresh = false) => {
       try {
-        const response = await fetch(`/api/stockdata?ticker=${symbol}`, { signal });
-        const d = await response.json();
+        const response = await fetch(`/api/stockdata?ticker=${symbol}${forceRefresh ? '&force=true' : ''}`, { signal });
+        let d = await response.json();
         if (signal.aborted) return;
 
         if (response.status === 202) {
@@ -107,6 +155,15 @@ export const useStockData = (searchTicker, useTestData) => {
           return;
         }
 
+        if (response.status === 200 && d?.cached && d?.response) {
+          cachedResponseRef.current = d.response;
+          setCachePrompt({
+            isVisible: true,
+            updatedAt: d.updated_at ?? null
+          });
+          return;
+        }
+
         stopPolling();
         setQueueInfo({
           isPending: false,
@@ -116,34 +173,7 @@ export const useStockData = (searchTicker, useTestData) => {
           etaUpdatedAt: null
         });
 
-        let optionPayload = d.optionData ?? null;
-        if (useTestData) {
-          const res = await fetch('/testdata.json', { signal });
-          optionPayload = await res.json();
-        }
-
-        const rows = optionPayload?.data?.table?.rows || [];
-        const nearestRows = getNearestExpiryRows(rows);
-        const furthestRows = getFurthestExpiryRows(rows);
-
-        const putCallNear = calculatePutCallRatio(nearestRows);
-        const putCallFar = calculatePutCallRatio(furthestRows);
-
-        setData(prev => ({
-          ...prev,
-          vwap: d.vwap ?? null,
-          close: d.close ?? null,
-          headlines: d.headlines || [],
-          institutionalSummary: d.institutionalSummary || null,
-          shortInterest: d.shortInterest || [],
-          rsiValues: d.rsiValues || [],
-          financials: d.financials || null,
-          insiderActivity: d.insiderActivity || null,
-          optionData: optionPayload ?? null,
-          putCallRatio: putCallFar !== null ? putCallFar.toFixed(2) : null,
-          putCallRatioFar: putCallFar !== null ? putCallFar.toFixed(2) : null,
-          putCallRatioNear: putCallNear !== null ? putCallNear.toFixed(2) : null
-        }));
+        await applyData(d);
       } catch (e) {
         if (signal.aborted) return;
         console.error(e);
@@ -164,6 +194,9 @@ export const useStockData = (searchTicker, useTestData) => {
         }));
       }
     };
+
+    fetchRef.current = fetchAllData;
+    applyDataRef.current = applyData;
 
     fetchAllData();
 
@@ -205,5 +238,19 @@ export const useStockData = (searchTicker, useTestData) => {
     };
   }, [queueInfo.isPending, queueInfo.etaSeconds, queueInfo.etaUpdatedAt]);
 
-  return { data, queueInfo };
+  const acceptCached = async () => {
+    const cached = cachedResponseRef.current;
+    if (!cached || !applyDataRef.current) return;
+    setCachePrompt({ isVisible: false, updatedAt: null });
+    cachedResponseRef.current = null;
+    await applyDataRef.current(cached);
+  };
+
+  const requestRefresh = () => {
+    setCachePrompt({ isVisible: false, updatedAt: null });
+    cachedResponseRef.current = null;
+    fetchRef.current?.(true);
+  };
+
+  return { data, queueInfo, cachePrompt, acceptCached, requestRefresh };
 };

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Header from './components/layout/Header';
 import SearchBar from './components/layout/SearchBar';
+import CachePromptModal from './components/layout/CachePromptModal';
 import TradingViewWidget from './components/widgets/TradingViewWidget';
 import ScoreCard from './components/widgets/ScoreCard';
 import ReportSection from './components/reports/ReportSection';
@@ -13,7 +14,7 @@ const App = () => {
   const [searchTicker, setSearchTicker] = useState('');
   const [activeTab, setActiveTab] = useState('Fundamental');
   
-  const { data: stockData, queueInfo } = useStockData(searchTicker, false);
+  const { data: stockData, queueInfo, cachePrompt, acceptCached, requestRefresh } = useStockData(searchTicker, false);
 
   const sectionScores = useMemo(() => 
     calculateAllScores(stockData), 
@@ -42,6 +43,12 @@ const App = () => {
         setTicker={setTicker} 
         handleSearch={handleSearch}
         queueInfo={queueInfo}
+      />
+      <CachePromptModal
+        isOpen={cachePrompt.isVisible}
+        updatedAt={cachePrompt.updatedAt}
+        onUseCached={acceptCached}
+        onRefresh={requestRefresh}
       />
 
       <main className="main-content">
