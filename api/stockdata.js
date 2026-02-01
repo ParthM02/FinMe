@@ -12,10 +12,11 @@ export default async function handler(req, res) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const queueTable = process.env.SUPABASE_QUEUE_TABLE;
+  const cacheTable = process.env.SUPABASE_CACHE_TABLE;
 
-  if (!supabaseUrl || !supabaseKey || !queueTable) {
+  if (!supabaseUrl || !supabaseKey || !queueTable || !cacheTable) {
     return res.status(500).json({
-      error: 'Supabase configuration is missing. Ensure SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_QUEUE_TABLE are set.'
+      error: 'Supabase configuration is missing. Ensure SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_QUEUE_TABLE, and SUPABASE_CACHE_TABLE are set.'
     });
   }
 
@@ -23,6 +24,22 @@ export default async function handler(req, res) {
     const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false }
     });
+
+    const { data: cachedRows, error: cacheError } = await supabase
+      .from(cacheTable)
+      .select('response, updated_at')
+      .eq('params->>ticker', symbol)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+
+    if (cacheError) {
+      throw cacheError;
+    }
+
+    const cachedResponse = cachedRows?.[0]?.response ?? null;
+    if (cachedResponse) {
+      return res.status(200).json(cachedResponse);
+    }
 
     const requestId = crypto.randomUUID();
     const now = new Date().toISOString();
