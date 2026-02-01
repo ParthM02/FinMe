@@ -3,9 +3,10 @@ import React from 'react';
 const formatEta = (seconds) => {
   if (seconds === null || seconds === undefined) return '—';
   const total = Math.max(0, Math.floor(seconds));
-  const mins = Math.floor(total / 60);
+  const hours = Math.floor(total / 3600);
+  const mins = Math.floor((total % 3600) / 60);
   const secs = total % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
 const SearchBar = ({ ticker, setTicker, handleSearch, queueInfo }) => (
@@ -43,9 +44,7 @@ const SearchBar = ({ ticker, setTicker, handleSearch, queueInfo }) => (
             pointerEvents: 'none'
           }}
         >
-          {queueInfo?.queuePosition
-            ? `Queue #${queueInfo.queuePosition} • ETA ${formatEta(queueInfo.etaRemainingSeconds ?? queueInfo.etaSeconds)}`
-            : `Queued • ETA ${formatEta(queueInfo?.etaRemainingSeconds ?? queueInfo?.etaSeconds)}`}
+          {`Retrieving Data: ETA - ${formatEta(queueInfo.etaRemainingSeconds ?? queueInfo.etaSeconds)}`}
         </div>
       )}
     </form>

@@ -85,12 +85,20 @@ export const useStockData = (searchTicker, useTestData) => {
           const position = d.queue_position ?? null;
           const etaSeconds = d.eta_seconds ?? (position ? position * 120 : null);
 
-          setQueueInfo({
-            isPending: true,
-            queuePosition: position,
-            etaSeconds,
-            etaRemainingSeconds: etaSeconds,
-            etaUpdatedAt: Date.now()
+          setQueueInfo(prev => {
+            if (prev.isPending && prev.etaSeconds !== null) {
+              return {
+                ...prev,
+                queuePosition: position
+              };
+            }
+            return {
+              isPending: true,
+              queuePosition: position,
+              etaSeconds,
+              etaRemainingSeconds: etaSeconds,
+              etaUpdatedAt: Date.now()
+            };
           });
 
           if (!pollTimerRef.current) {
