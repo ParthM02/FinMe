@@ -14,7 +14,7 @@ const App = () => {
   const [searchTicker, setSearchTicker] = useState('');
   const [activeTab, setActiveTab] = useState('Fundamental');
   
-  const { data: stockData, queueInfo, cachePrompt, acceptCached, requestRefresh } = useStockData(searchTicker, false);
+  const { data: stockData, queueInfo, cachePrompt, acceptCached, requestRefresh, lastUpdatedAt } = useStockData(searchTicker, false);
 
   const sectionScores = useMemo(() => 
     calculateAllScores(stockData), 
@@ -43,6 +43,7 @@ const App = () => {
         setTicker={setTicker} 
         handleSearch={handleSearch}
         queueInfo={queueInfo}
+        lastUpdatedAt={lastUpdatedAt}
       />
       <CachePromptModal
         isOpen={cachePrompt.isVisible}

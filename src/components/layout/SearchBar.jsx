@@ -9,8 +9,15 @@ const formatEta = (seconds) => {
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-const SearchBar = ({ ticker, setTicker, handleSearch, queueInfo }) => (
-  <div className="search-container">
+const formatLastUpdated = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleString();
+};
+
+const SearchBar = ({ ticker, setTicker, handleSearch, queueInfo, lastUpdatedAt }) => (
+  <div className="search-container search-container-row">
     <form onSubmit={handleSearch} className="search-form" style={{ position: 'relative' }}>
       <input
         type="text"
@@ -48,6 +55,11 @@ const SearchBar = ({ ticker, setTicker, handleSearch, queueInfo }) => (
         </div>
       )}
     </form>
+    {!queueInfo?.isPending && formatLastUpdated(lastUpdatedAt) && (
+      <div className="last-updated-pill">
+        Last Updated: {formatLastUpdated(lastUpdatedAt)}
+      </div>
+    )}
   </div>
 );
 

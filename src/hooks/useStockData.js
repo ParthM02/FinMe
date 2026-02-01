@@ -37,6 +37,7 @@ export const useStockData = (searchTicker, useTestData) => {
     isVisible: false,
     updatedAt: null
   });
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   useEffect(() => {
     if (!searchTicker) {
@@ -88,6 +89,7 @@ export const useStockData = (searchTicker, useTestData) => {
       etaUpdatedAt: null
     });
     setData(initialData);
+    setLastUpdatedAt(null);
     setCachePrompt({
       isVisible: false,
       updatedAt: null
@@ -104,7 +106,7 @@ export const useStockData = (searchTicker, useTestData) => {
       }
     };
 
-    const applyData = async (payload) => {
+    const applyData = async (payload, updatedAtValue = null) => {
       let optionPayload = payload.optionData ?? null;
       if (useTestData) {
         const res = await fetch('/testdata.json', { signal });
@@ -133,9 +135,11 @@ export const useStockData = (searchTicker, useTestData) => {
         putCallRatioFar: putCallFar !== null ? putCallFar.toFixed(2) : null,
         putCallRatioNear: putCallNear !== null ? putCallNear.toFixed(2) : null
       }));
+      setLastUpdatedAt(updatedAtValue ?? null);
     };
 
     const fetchAllData = async (forceRefresh = false) => {
+      let cachedUpdatedAtForApply = null;
       try {
         const response = await fetch(`/api/stockdata?ticker=${symbol}${forceRefresh ? '&force=true' : ''}`, { signal });
         let d = await response.json();
@@ -177,6 +181,7 @@ export const useStockData = (searchTicker, useTestData) => {
               }
               return;
             }
+            cachedUpdatedAtForApply = updatedAt;
             d = d.response;
           } else {
             if (cachePromptVisibleRef.current) return;
@@ -200,7 +205,7 @@ export const useStockData = (searchTicker, useTestData) => {
           etaUpdatedAt: null
         });
 
-        await applyData(d);
+        await applyData(d, cachedUpdatedAtForApply ?? d?.updated_at ?? null);
       } catch (e) {
         if (signal.aborted) return;
         console.error(e);
@@ -284,7 +289,7 @@ export const useStockData = (searchTicker, useTestData) => {
       etaRemainingSeconds: null,
       etaUpdatedAt: null
     });
-    await applyDataRef.current(cached);
+    await applyDataRef.current(cached, cachePrompt.updatedAt ?? null);
   };
 
   const requestRefresh = () => {
@@ -296,5 +301,5 @@ export const useStockData = (searchTicker, useTestData) => {
     fetchRef.current?.(true);
   };
 
-  return { data, queueInfo, cachePrompt, acceptCached, requestRefresh };
+  return { data, queueInfo, cachePrompt, acceptCached, requestRefresh, lastUpdatedAt };
 };

@@ -92,6 +92,13 @@ body {
     padding: 1rem 1.5rem;
 }
 
+.search-container-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .search-form {
     position: relative;
     max-width: 32rem;
@@ -133,6 +140,16 @@ body {
 
 .search-button:hover {
     color: white;
+}
+
+.last-updated-pill {
+  color: #a5b4fc;
+  font-weight: 500;
+  font-size: 0.95rem;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
 }
 
 /* Cache Prompt Modal */
