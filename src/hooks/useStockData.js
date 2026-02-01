@@ -7,6 +7,7 @@ export const useStockData = (searchTicker, useTestData) => {
   const fetchRef = useRef(null);
   const applyDataRef = useRef(null);
   const cachedResponseRef = useRef(null);
+  const cachePromptVisibleRef = useRef(false);
   const [data, setData] = useState({
     vwap: null,
     close: null,
@@ -55,6 +56,7 @@ export const useStockData = (searchTicker, useTestData) => {
         updatedAt: null
       });
       cachedResponseRef.current = null;
+      cachePromptVisibleRef.current = false;
       return;
     }
 
@@ -84,6 +86,7 @@ export const useStockData = (searchTicker, useTestData) => {
       updatedAt: null
     });
     cachedResponseRef.current = null;
+    cachePromptVisibleRef.current = false;
     
     const stopPolling = () => {
       if (pollTimerRef.current) {
@@ -156,11 +159,14 @@ export const useStockData = (searchTicker, useTestData) => {
         }
 
         if (response.status === 200 && d?.cached && d?.response) {
+          if (cachePromptVisibleRef.current) return;
+          stopPolling();
           cachedResponseRef.current = d.response;
           setCachePrompt({
             isVisible: true,
             updatedAt: d.updated_at ?? null
           });
+          cachePromptVisibleRef.current = true;
           return;
         }
 
@@ -243,12 +249,25 @@ export const useStockData = (searchTicker, useTestData) => {
     if (!cached || !applyDataRef.current) return;
     setCachePrompt({ isVisible: false, updatedAt: null });
     cachedResponseRef.current = null;
+    cachePromptVisibleRef.current = false;
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+    setQueueInfo({
+      isPending: false,
+      queuePosition: null,
+      etaSeconds: null,
+      etaRemainingSeconds: null,
+      etaUpdatedAt: null
+    });
     await applyDataRef.current(cached);
   };
 
   const requestRefresh = () => {
     setCachePrompt({ isVisible: false, updatedAt: null });
     cachedResponseRef.current = null;
+    cachePromptVisibleRef.current = false;
     fetchRef.current?.(true);
   };
 
