@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const { data: cachedRows, error: cacheError } = await supabase
       .from(cacheTable)
       .select('response, updated_at')
-      .eq('params->>ticker', symbol)
+      .eq('params', symbol)
       .order('updated_at', { ascending: false })
       .limit(1);
 
@@ -39,8 +39,6 @@ export default async function handler(req, res) {
     const cachedResponse = cachedRows?.[0]?.response ?? null;
     if (cachedResponse) {
       console.log(`Cache hit for ticker: ${symbol}`);
-      console.log(`Cached response timestamp: ${cachedRows[0].updated_at}`);
-      console.log(`Cached response data: ${JSON.stringify(cachedResponse)}`);
       return res.status(200).json(cachedResponse);
     }
     console.log(`Cache miss for ticker: ${symbol}. Enqueuing request.`);
