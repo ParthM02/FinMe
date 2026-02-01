@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -234,14 +234,14 @@ const OptionsView = ({ putCallRatio, putCallRatioFar, putCallRatioNear, optionDa
     }
   };
 
-  const computeImpliedMovePct = (forecast) => {
+  const computeImpliedMovePct = useCallback((forecast) => {
     if (!spot || !forecast || forecast.straddleMid === null || forecast.straddleMid === undefined) return null;
     if (!spot || spot <= 0) return null;
     return (forecast.straddleMid / spot) * 100;
-  };
+  }, [spot]);
 
-  const impliedMoveNear = useMemo(() => computeImpliedMovePct(premiumForecastNear), [premiumForecastNear, spot]);
-  const impliedMoveMid = useMemo(() => computeImpliedMovePct(premiumForecastMid), [premiumForecastMid, spot]);
+  const impliedMoveNear = useMemo(() => computeImpliedMovePct(premiumForecastNear), [premiumForecastNear, computeImpliedMovePct]);
+  const impliedMoveMid = useMemo(() => computeImpliedMovePct(premiumForecastMid), [premiumForecastMid, computeImpliedMovePct]);
 
   const expiryNearText = formatTimeToExpiry(deltaAsymmetryNear?.timeToExpiry) || formatTimeToExpiry(premiumForecastNear?.timeToExpiry) || null;
   const expiryMidText = formatTimeToExpiry(deltaAsymmetryMid?.timeToExpiry) || formatTimeToExpiry(premiumForecastMid?.timeToExpiry) || null;
