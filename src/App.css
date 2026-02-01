@@ -101,7 +101,8 @@ body {
 
 .search-form {
     position: relative;
-    max-width: 32rem;
+  max-width: 44rem;
+  width: 100%;
 }
 
 .search-input {

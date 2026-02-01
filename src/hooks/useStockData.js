@@ -24,6 +24,7 @@ export const useStockData = (searchTicker, useTestData) => {
   const cachedResponseRef = useRef(null);
   const cachePromptVisibleRef = useRef(false);
   const decisionTickerRef = useRef(null);
+  const decisionModeRef = useRef(null);
   const baselineUpdatedAtRef = useRef(null);
   const [data, setData] = useState(initialData);
   const [queueInfo, setQueueInfo] = useState({
@@ -63,6 +64,7 @@ export const useStockData = (searchTicker, useTestData) => {
       cachedResponseRef.current = null;
       cachePromptVisibleRef.current = false;
       decisionTickerRef.current = null;
+      decisionModeRef.current = null;
       baselineUpdatedAtRef.current = null;
       return;
     }
@@ -97,6 +99,7 @@ export const useStockData = (searchTicker, useTestData) => {
     cachedResponseRef.current = null;
     cachePromptVisibleRef.current = false;
     decisionTickerRef.current = null;
+    decisionModeRef.current = null;
     baselineUpdatedAtRef.current = null;
     
     const stopPolling = () => {
@@ -174,8 +177,13 @@ export const useStockData = (searchTicker, useTestData) => {
         if (response.status === 200 && d?.cached && d?.response) {
           const updatedAt = d.updated_at ?? null;
 
-          if (decisionTickerRef.current === searchTicker) {
-            if (baselineUpdatedAtRef.current && updatedAt && baselineUpdatedAtRef.current === updatedAt) {
+          if (decisionTickerRef.current === searchTicker && decisionModeRef.current) {
+            if (
+              decisionModeRef.current === 'refresh'
+              && baselineUpdatedAtRef.current
+              && updatedAt
+              && baselineUpdatedAtRef.current === updatedAt
+            ) {
               if (!pollTimerRef.current) {
                 pollTimerRef.current = setInterval(fetchAllData, 15000);
               }
@@ -183,6 +191,7 @@ export const useStockData = (searchTicker, useTestData) => {
             }
             cachedUpdatedAtForApply = updatedAt;
             d = d.response;
+            baselineUpdatedAtRef.current = null;
           } else {
             if (cachePromptVisibleRef.current) return;
             stopPolling();
@@ -277,6 +286,7 @@ export const useStockData = (searchTicker, useTestData) => {
     cachedResponseRef.current = null;
     cachePromptVisibleRef.current = false;
     decisionTickerRef.current = searchTicker;
+    decisionModeRef.current = 'cached';
     baselineUpdatedAtRef.current = null;
     if (pollTimerRef.current) {
       clearInterval(pollTimerRef.current);
@@ -298,6 +308,7 @@ export const useStockData = (searchTicker, useTestData) => {
     cachedResponseRef.current = null;
     cachePromptVisibleRef.current = false;
     decisionTickerRef.current = searchTicker;
+    decisionModeRef.current = 'refresh';
     fetchRef.current?.(true);
   };
 
