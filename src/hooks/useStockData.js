@@ -1,6 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { calculatePutCallRatio, getNearestExpiryRows, getFurthestExpiryRows } from '../optionAnalysis';
 
+const initialData = {
+  vwap: null,
+  close: null,
+  headlines: [],
+  institutionalSummary: null,
+  shortInterest: [],
+  rsiValues: [],
+  optionData: null,
+  putCallRatio: null,
+  putCallRatioFar: null,
+  putCallRatioNear: null,
+  financials: null,
+  insiderActivity: null
+};
+
 export const useStockData = (searchTicker, useTestData) => {
   const pollTimerRef = useRef(null);
   const etaTimerRef = useRef(null);
@@ -10,20 +25,6 @@ export const useStockData = (searchTicker, useTestData) => {
   const cachePromptVisibleRef = useRef(false);
   const decisionTickerRef = useRef(null);
   const baselineUpdatedAtRef = useRef(null);
-  const initialData = {
-    vwap: null,
-    close: null,
-    headlines: [],
-    institutionalSummary: null,
-    shortInterest: [],
-    rsiValues: [],
-    optionData: null,
-    putCallRatio: null,
-    putCallRatioFar: null,
-    putCallRatioNear: null,
-    financials: null,
-    insiderActivity: null
-  };
   const [data, setData] = useState(initialData);
   const [queueInfo, setQueueInfo] = useState({
     isPending: false,
