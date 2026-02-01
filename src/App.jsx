@@ -5,7 +5,6 @@ import TradingViewWidget from './components/widgets/TradingViewWidget';
 import ScoreCard from './components/widgets/ScoreCard';
 import ReportSection from './components/reports/ReportSection';
 import { useStockData } from './hooks/useStockData';
-import { useCooldown } from './hooks/useCooldown';
 import { calculateAllScores } from './utils/scoring';
 import './App.css';
 
@@ -14,8 +13,7 @@ const App = () => {
   const [searchTicker, setSearchTicker] = useState('');
   const [activeTab, setActiveTab] = useState('Fundamental');
   
-  const { cooldown, cooldownActive, startCooldown } = useCooldown(60);
-  const stockData = useStockData(searchTicker, false);
+  const { data: stockData, queueInfo } = useStockData(searchTicker, false);
 
   const sectionScores = useMemo(() => 
     calculateAllScores(stockData), 
@@ -24,7 +22,7 @@ const App = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (!ticker || cooldownActive) return;
+    if (!ticker) return;
     const next = ticker.trim().toUpperCase();
     if (!next) return;
     // Allow refreshing the same symbol after cooldown.
@@ -34,7 +32,6 @@ const App = () => {
     } else {
       setSearchTicker(next);
     }
-    startCooldown();
   };
 
   return (
@@ -43,9 +40,8 @@ const App = () => {
       <SearchBar 
         ticker={ticker} 
         setTicker={setTicker} 
-        handleSearch={handleSearch} 
-        cooldown={cooldown} 
-        cooldownActive={cooldownActive} 
+        handleSearch={handleSearch}
+        queueInfo={queueInfo}
       />
 
       <main className="main-content">

@@ -43,26 +43,75 @@ export default async function handler(req, res) {
     }
     console.log(`Cache miss for ticker: ${symbol}. Enqueuing request.`);
 
+    const getQueuePosition = async (createdAt) => {
+      const { count, error: countError } = await supabase
+        .from(queueTable)
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .lte('created_at', createdAt);
+
+      if (countError) {
+        throw countError;
+      }
+
+      return count ?? null;
+    };
+
+    const { data: queuedRows, error: queueLookupError } = await supabase
+      .from(queueTable)
+      .select('id, created_at, status')
+      .eq('status', 'pending')
+      .eq('request_param->>ticker', symbol)
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    if (queueLookupError) {
+      throw queueLookupError;
+    }
+
+    if (queuedRows?.length) {
+      const existing = queuedRows[0];
+      const position = await getQueuePosition(existing.created_at);
+      const etaSeconds = position ? position * 120 : null;
+
+      return res.status(202).json({
+        id: existing.id,
+        status: 'pending',
+        created_at: existing.created_at,
+        queue_position: position,
+        eta_seconds: etaSeconds,
+        already_queued: true
+      });
+    }
+
     const requestId = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    const { error } = await supabase
+    const { data: insertedRow, error } = await supabase
       .from(queueTable)
       .insert({
         id: requestId,
         request_param: { ticker: symbol },
         status: 'pending',
         created_at: now
-      });
+      })
+      .select('id, created_at')
+      .single();
 
     if (error) {
       throw error;
     }
 
+    const position = await getQueuePosition(insertedRow?.created_at ?? now);
+    const etaSeconds = position ? position * 120 : null;
+
     return res.status(202).json({
-      id: requestId,
+      id: insertedRow?.id ?? requestId,
       status: 'pending',
-      created_at: now
+      created_at: insertedRow?.created_at ?? now,
+      queue_position: position,
+      eta_seconds: etaSeconds,
+      already_queued: false
     });
   } catch (error) {
     return res.status(500).json({ error: error.message });

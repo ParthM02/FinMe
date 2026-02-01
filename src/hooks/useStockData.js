@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { calculatePutCallRatio, getNearestExpiryRows, getFurthestExpiryRows } from '../optionAnalysis';
 
 export const useStockData = (searchTicker, useTestData) => {
+  const pollTimerRef = useRef(null);
+  const etaTimerRef = useRef(null);
   const [data, setData] = useState({
     vwap: null,
     close: null,
@@ -16,9 +18,33 @@ export const useStockData = (searchTicker, useTestData) => {
     financials: null,
     insiderActivity: null
   });
+  const [queueInfo, setQueueInfo] = useState({
+    isPending: false,
+    queuePosition: null,
+    etaSeconds: null,
+    etaRemainingSeconds: null,
+    etaUpdatedAt: null
+  });
 
   useEffect(() => {
-    if (!searchTicker) return;
+    if (!searchTicker) {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+      if (etaTimerRef.current) {
+        clearInterval(etaTimerRef.current);
+        etaTimerRef.current = null;
+      }
+      setQueueInfo({
+        isPending: false,
+        queuePosition: null,
+        etaSeconds: null,
+        etaRemainingSeconds: null,
+        etaUpdatedAt: null
+      });
+      return;
+    }
 
     // Clear option-specific fields immediately so the UI doesn't show stale chains
     // while a new symbol is loading.
@@ -33,12 +59,54 @@ export const useStockData = (searchTicker, useTestData) => {
     const controller = new AbortController();
     const { signal } = controller;
     const symbol = encodeURIComponent(searchTicker);
+
+    setQueueInfo({
+      isPending: false,
+      queuePosition: null,
+      etaSeconds: null,
+      etaRemainingSeconds: null,
+      etaUpdatedAt: null
+    });
     
+    const stopPolling = () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+
     const fetchAllData = async () => {
       try {
         const response = await fetch(`/api/stockdata?ticker=${symbol}`, { signal });
         const d = await response.json();
         if (signal.aborted) return;
+
+        if (response.status === 202) {
+          const position = d.queue_position ?? null;
+          const etaSeconds = d.eta_seconds ?? (position ? position * 120 : null);
+
+          setQueueInfo({
+            isPending: true,
+            queuePosition: position,
+            etaSeconds,
+            etaRemainingSeconds: etaSeconds,
+            etaUpdatedAt: Date.now()
+          });
+
+          if (!pollTimerRef.current) {
+            pollTimerRef.current = setInterval(fetchAllData, 15000);
+          }
+          return;
+        }
+
+        stopPolling();
+        setQueueInfo({
+          isPending: false,
+          queuePosition: null,
+          etaSeconds: null,
+          etaRemainingSeconds: null,
+          etaUpdatedAt: null
+        });
 
         let optionPayload = d.optionData ?? null;
         if (useTestData) {
@@ -71,6 +139,14 @@ export const useStockData = (searchTicker, useTestData) => {
       } catch (e) {
         if (signal.aborted) return;
         console.error(e);
+        stopPolling();
+        setQueueInfo({
+          isPending: false,
+          queuePosition: null,
+          etaSeconds: null,
+          etaRemainingSeconds: null,
+          etaUpdatedAt: null
+        });
         setData(prev => ({
           ...prev,
           optionData: null,
@@ -83,8 +159,43 @@ export const useStockData = (searchTicker, useTestData) => {
 
     fetchAllData();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      stopPolling();
+    };
   }, [searchTicker, useTestData]);
 
-  return data;
+  useEffect(() => {
+    if (!queueInfo.isPending || queueInfo.etaSeconds === null || queueInfo.etaUpdatedAt === null) {
+      if (etaTimerRef.current) {
+        clearInterval(etaTimerRef.current);
+        etaTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (etaTimerRef.current) return;
+
+    etaTimerRef.current = setInterval(() => {
+      setQueueInfo(prev => {
+        if (!prev.isPending || prev.etaSeconds === null || prev.etaUpdatedAt === null) return prev;
+        const elapsed = Math.floor((Date.now() - prev.etaUpdatedAt) / 1000);
+        const remaining = Math.max(0, prev.etaSeconds - elapsed);
+        if (remaining === prev.etaRemainingSeconds) return prev;
+        return {
+          ...prev,
+          etaRemainingSeconds: remaining
+        };
+      });
+    }, 1000);
+
+    return () => {
+      if (etaTimerRef.current) {
+        clearInterval(etaTimerRef.current);
+        etaTimerRef.current = null;
+      }
+    };
+  }, [queueInfo.isPending, queueInfo.etaSeconds, queueInfo.etaUpdatedAt]);
+
+  return { data, queueInfo };
 };
