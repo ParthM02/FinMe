@@ -1,0 +1,83 @@
+import React, { useMemo, useState } from 'react';
+import SearchBar from '../components/layout/SearchBar';
+import CachePromptModal from '../components/layout/CachePromptModal';
+import TradingViewWidget from '../components/widgets/TradingViewWidget';
+import ScoreCard from '../components/widgets/ScoreCard';
+import ReportSection from '../components/reports/ReportSection';
+import { useStockData } from '../hooks/useStockData';
+import { calculateAllScores } from '../utils/scoring';
+
+const AnalysisPage = () => {
+  const [ticker, setTicker] = useState('');
+  const [searchTicker, setSearchTicker] = useState('');
+  const [activeTab, setActiveTab] = useState('Fundamental');
+
+  const { data: stockData, queueInfo, cachePrompt, acceptCached, requestRefresh, lastUpdatedAt } = useStockData(searchTicker, false);
+
+  const sectionScores = useMemo(
+    () => calculateAllScores(stockData),
+    [stockData]
+  );
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (!ticker) return;
+    const next = ticker.trim().toUpperCase();
+    if (!next) return;
+    // Allow refreshing the same symbol after cooldown.
+    if (next === searchTicker) {
+      setSearchTicker('');
+      setTimeout(() => setSearchTicker(next), 0);
+    } else {
+      setSearchTicker(next);
+    }
+  };
+
+  return (
+    <>
+      <SearchBar
+        ticker={ticker}
+        setTicker={setTicker}
+        handleSearch={handleSearch}
+        queueInfo={queueInfo}
+        lastUpdatedAt={lastUpdatedAt}
+      />
+      <CachePromptModal
+        isOpen={cachePrompt.isVisible}
+        updatedAt={cachePrompt.updatedAt}
+        onUseCached={acceptCached}
+        onRefresh={requestRefresh}
+      />
+
+      <main className="main-content">
+        <div className="grid-container">
+          <div className="left-column">
+            <div className="card">
+              <div className="card-content">
+                <TradingViewWidget type="info" symbol={searchTicker} />
+              </div>
+            </div>
+
+            <ScoreCard
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              scores={sectionScores}
+            />
+          </div>
+
+          <div className="right-column">
+            <div className="card chart-card">
+              <div className="card-content">
+                <TradingViewWidget type="chart" symbol={searchTicker} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ReportSection activeTab={activeTab} stockData={stockData} />
+      </main>
+    </>
+  );
+};
+
+export default AnalysisPage;

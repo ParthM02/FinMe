@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 const Header = () => (
   <header className="app-header">
@@ -9,9 +10,15 @@ const Header = () => (
           <span>✨</span><span>100% Free!</span><span>✨</span>
         </button>
         <nav className="navigation">
-          <button className="nav-button">Home (Soon)</button>
-          <button className="nav-button">Analysis</button>
-          <button className="nav-button">Edge (Soon)</button>
+          <NavLink className="nav-button" to="/" end>
+            Home
+          </NavLink>
+          <NavLink className="nav-button" to="/analysis">
+            Analysis
+          </NavLink>
+          <button className="nav-button" type="button" disabled>
+            Edge (Soon)
+          </button>
         </nav>
         <a
           className="nav-button x-button"
