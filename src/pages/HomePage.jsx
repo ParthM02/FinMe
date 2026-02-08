@@ -22,6 +22,7 @@ const HomePage = () => {
         line-chart-type="Baseline"
         item-size="compact"
         color-theme="dark"
+        is-transparent="false"
       />
     </main>
   );
