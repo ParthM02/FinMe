@@ -21,7 +21,7 @@ const HomePage = () => {
         symbols="FOREXCOM:SPXUSD,FOREXCOM:NSXUSD,FOREXCOM:DJI,FX:EURUSD,BITSTAMP:BTCUSD,BITSTAMP:ETHUSD,CMCMARKETS:GOLD,TVC:SILVER"
         line-chart-type="Baseline"
         item-size="compact"
-        is-transparent="true"
+        color-theme="dark"
       />
     </main>
   );
