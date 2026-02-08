@@ -14,7 +14,7 @@ const Header = () => (
           <button className="nav-button">Edge (Soon)</button>
         </nav>
         <a
-          className="nav-button"
+          className="nav-button x-button"
           href="https://x.com/cookeddeveloper"
           target="_blank"
           rel="noopener noreferrer"

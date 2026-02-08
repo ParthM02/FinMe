@@ -42,11 +42,15 @@ body {
     border: none;
     border-radius: 9999px;
     font-weight: 500;
-    display: flex;
-    align-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
     gap: 0.25rem;
     cursor: pointer;
     transition: background-color 0.2s;
+  font-size: 0.9rem;
+  line-height: 1;
+  height: 2.25rem;
 }
 
 .upgrade-button:hover {
@@ -66,10 +70,26 @@ body {
     border-radius: 9999px;
     cursor: pointer;
     transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 0.9rem;
+  line-height: 1;
+  height: 2.25rem;
 }
 
 .nav-button:hover {
     background-color: rgba(255, 255, 255, 0.2);
+}
+
+.x-button {
+  background-color: #fff;
+  color: #000;
+}
+
+.x-button:hover {
+  background-color: #e5e7eb;
 }
 
 .user-icon {
