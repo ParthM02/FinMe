@@ -13,6 +13,15 @@ const Header = () => (
           <button className="nav-button">Analysis</button>
           <button className="nav-button">Edge (Soon)</button>
         </nav>
+        <a
+          className="nav-button"
+          href="https://x.com/cookeddeveloper"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Visit cookeddeveloper on X"
+        >
+          X
+        </a>
         <div className="user-icon">
           <svg xmlns="http://www.w3.org/2000/svg" className="icon" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
