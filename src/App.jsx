@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Header from './components/layout/Header';
 import SearchBar from './components/layout/SearchBar';
 import CachePromptModal from './components/layout/CachePromptModal';
+import Footer from './components/layout/Footer';
 import TradingViewWidget from './components/widgets/TradingViewWidget';
 import ScoreCard from './components/widgets/ScoreCard';
 import ReportSection from './components/reports/ReportSection';
@@ -79,6 +80,7 @@ const App = () => {
 
         <ReportSection activeTab={activeTab} stockData={stockData} />
       </main>
+      <Footer />
     </div>
   );
 };

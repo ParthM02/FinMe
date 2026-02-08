@@ -1063,6 +1063,49 @@ body {
   color: #fff;
 }
 
+/* Footer Disclaimer */
+.app-footer {
+  border-top: 1px solid rgb(31 41 55);
+  background: #000;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.footer-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+
+.footer-section {
+  background: rgba(17, 24, 39, 0.65);
+  border: 1px solid rgb(31 41 55);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.footer-section h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.footer-section p {
+  margin: 0;
+  color: #9ca3af;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
 /* Responsive Styles */
 @media (min-width: 1024px) {
     .grid-container {
