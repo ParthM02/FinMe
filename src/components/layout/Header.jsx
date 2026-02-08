@@ -20,7 +20,7 @@ const Header = () => (
           rel="noopener noreferrer"
           aria-label="Visit cookeddeveloper on X"
         >
-          X
+          Follow us on X
         </a>
         <div className="user-icon">
           <svg xmlns="http://www.w3.org/2000/svg" className="icon" viewBox="0 0 20 20" fill="currentColor">
