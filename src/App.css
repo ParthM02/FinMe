@@ -1083,27 +1083,31 @@ body {
   font-weight: 700;
   margin: 0;
   color: #fff;
+  text-align: left;
 }
 
-.footer-section {
+.footer-contract {
   background: rgba(17, 24, 39, 0.65);
   border: 1px solid rgb(31 41 55);
   border-radius: 1rem;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem;
+  text-align: left;
 }
 
-.footer-section h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #e5e7eb;
-}
-
-.footer-section p {
-  margin: 0;
-  color: #9ca3af;
-  line-height: 1.6;
+.footer-contract p {
+  margin: 0 0 0.9rem 0;
+  color: #d1d5db;
+  line-height: 1.7;
   font-size: 0.95rem;
+}
+
+.footer-contract p:last-child {
+  margin-bottom: 0;
+}
+
+.footer-contract strong {
+  color: #fff;
+  font-weight: 600;
 }
 
 /* Responsive Styles */
