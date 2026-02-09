@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         const { error: popularUpdateError } = await supabase
           .from(popularTable)
           .update({ count: currentCount + 1 })
-          .eq('params->>ticker', symbol);
+          .match({ params: { ticker: symbol } });
 
         if (popularUpdateError) {
           throw popularUpdateError;
