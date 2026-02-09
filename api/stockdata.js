@@ -28,26 +28,35 @@ export default async function handler(req, res) {
     });
 
     const upsertPopularTicker = async () => {
-      const { data: incrementedRows, error: incrementError } = await supabase
+      const { data: popularRows, error: popularLookupError } = await supabase
         .from(popularTable)
-        .increment('count', 1)
+        .select('count')
         .eq('params->>ticker', symbol)
-        .select('count');
+        .order('count', { ascending: false })
+        .limit(1);
 
-      if (incrementError) {
-        throw incrementError;
+      if (popularLookupError) {
+        throw popularLookupError;
       }
 
-      if (incrementedRows?.length) {
-        return;
-      }
+      if (popularRows?.length) {
+        const currentCount = Number(popularRows[0]?.count ?? 0);
+        const { error: popularUpdateError } = await supabase
+          .from(popularTable)
+          .update({ count: currentCount + 1 })
+          .eq('params->>ticker', symbol);
 
-      const { error: popularInsertError } = await supabase
-        .from(popularTable)
-        .insert({ params: { ticker: symbol }, count: 1 });
+        if (popularUpdateError) {
+          throw popularUpdateError;
+        }
+      } else {
+        const { error: popularInsertError } = await supabase
+          .from(popularTable)
+          .insert({ params: { ticker: symbol }, count: 1 });
 
-      if (popularInsertError) {
-        throw popularInsertError;
+        if (popularInsertError) {
+          throw popularInsertError;
+        }
       }
     };
 
