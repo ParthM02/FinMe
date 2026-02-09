@@ -14,10 +14,11 @@ export default async function handler(req, res) {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const queueTable = process.env.SUPABASE_QUEUE_TABLE;
   const cacheTable = process.env.SUPABASE_CACHE_TABLE;
+  const popularTable = process.env.SUPABASE_POPULAR_TABLE;
 
-  if (!supabaseUrl || !supabaseKey || !queueTable || !cacheTable) {
+  if (!supabaseUrl || !supabaseKey || !queueTable || !cacheTable || !popularTable) {
     return res.status(500).json({
-      error: 'Supabase configuration is missing. Ensure SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_QUEUE_TABLE, and SUPABASE_CACHE_TABLE are set.'
+      error: 'Supabase configuration is missing. Ensure SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_QUEUE_TABLE, SUPABASE_CACHE_TABLE, and SUPABASE_POPULAR_TABLE are set.'
     });
   }
 
@@ -25,6 +26,41 @@ export default async function handler(req, res) {
     const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false }
     });
+
+    const upsertPopularTicker = async () => {
+      const { data: popularRows, error: popularLookupError } = await supabase
+        .from(popularTable)
+        .select('count')
+        .eq('params->>ticker', symbol)
+        .order('count', { ascending: false })
+        .limit(1);
+
+      if (popularLookupError) {
+        throw popularLookupError;
+      }
+
+      if (popularRows?.length) {
+        const currentCount = Number(popularRows[0]?.count ?? 0);
+        const { error: popularUpdateError } = await supabase
+          .from(popularTable)
+          .update({ count: currentCount + 1 })
+          .eq('params->>ticker', symbol);
+
+        if (popularUpdateError) {
+          throw popularUpdateError;
+        }
+      } else {
+        const { error: popularInsertError } = await supabase
+          .from(popularTable)
+          .insert({ params: { ticker: symbol }, count: 1 });
+
+        if (popularInsertError) {
+          throw popularInsertError;
+        }
+      }
+    };
+
+    await upsertPopularTicker();
 
     if (!forceRefresh) {
       const { data: cachedRows, error: cacheError } = await supabase
