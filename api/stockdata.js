@@ -39,24 +39,17 @@ export default async function handler(req, res) {
         throw popularLookupError;
       }
 
-      if (popularRows?.length) {
-        const currentCount = Number(popularRows[0]?.count ?? 0);
-        const { error: popularUpdateError } = await supabase
-          .from(popularTable)
-          .update({ count: currentCount + 1 })
-          .contains('params', { ticker: symbol });
+      const currentCount = Number(popularRows?.[0]?.count ?? 0);
+      
+      const { error: popularUpsertError } = await supabase
+        .from(popularTable)
+        .upsert(
+          { params: { ticker: symbol }, count: currentCount + 1 },
+          { onConflict: 'params' }
+        );
 
-        if (popularUpdateError) {
-          throw popularUpdateError;
-        }
-      } else {
-        const { error: popularInsertError } = await supabase
-          .from(popularTable)
-          .insert({ params: { ticker: symbol }, count: 1 });
-
-        if (popularInsertError) {
-          throw popularInsertError;
-        }
+      if (popularUpsertError) {
+        throw popularUpsertError;
       }
     };
 
