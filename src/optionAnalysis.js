@@ -40,10 +40,14 @@ export function groupOptionRowsByExpiry(optionRows) {
     return groups.filter((g) => g.date instanceof Date && !Number.isNaN(g.date.getTime()));
 }
 
-export function getNearestExpiryGroup(optionRows) {
+export function getNearestExpiryGroup(optionRows, refDate = new Date()) {
     const groups = groupOptionRowsByExpiry(optionRows);
     if (!groups.length) return null;
-    return groups.reduce((best, g) => (g.date < best.date ? g : best), groups[0]);
+    const sorted = [...groups].sort((a, b) => a.date.getTime() - b.date.getTime());
+    const todayMidnight = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
+    const upcoming = sorted.find(g => g.date >= todayMidnight);
+    if (upcoming) return upcoming;
+    return sorted[0];
 }
 
 export function getFurthestExpiryGroup(optionRows) {

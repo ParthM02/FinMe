@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 export default async function handler(req, res) {
   const { ticker } = req.query;
@@ -11,14 +15,14 @@ export default async function handler(req, res) {
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseKey = process.env.SUPABASE_PUBLIC_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   const queueTable = process.env.SUPABASE_QUEUE_TABLE;
   const cacheTable = process.env.SUPABASE_CACHE_TABLE;
   const popularTable = process.env.SUPABASE_POPULAR_TABLE;
 
   if (!supabaseUrl || !supabaseKey || !queueTable || !cacheTable || !popularTable) {
     return res.status(500).json({
-      error: 'Supabase configuration is missing. Ensure SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_QUEUE_TABLE, SUPABASE_CACHE_TABLE, and SUPABASE_POPULAR_TABLE are set.'
+      error: 'Supabase configuration is missing. Ensure SUPABASE_URL, SUPABASE_PUBLIC_KEY, SUPABASE_QUEUE_TABLE, SUPABASE_CACHE_TABLE, and SUPABASE_POPULAR_TABLE are set.'
     });
   }
 

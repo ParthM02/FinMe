@@ -39,10 +39,9 @@ const ScoreCard = ({ activeTab, setActiveTab, scores = {} }) => {
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={activeTab === tab ? 'tab-button active' : 'tab-button'}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem' }}
                 >
-                  <span>{tab}</span>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 600, color: getScoreColor(tabScore) }}>
+                  <span className="tab-label">{tab}</span>
+                  <span className="tab-score" style={{ color: getScoreColor(tabScore) }}>
                     {tabScore !== null ? `${tabScore}/100` : '--'}
                   </span>
                 </button>

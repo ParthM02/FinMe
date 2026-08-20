@@ -2,6 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <script>
+      // Throttles ResizeObserver callbacks with requestAnimationFrame to prevent notification loops
+      if (typeof window !== 'undefined' && window.ResizeObserver) {
+        const OriginalResizeObserver = window.ResizeObserver;
+        window.ResizeObserver = class ResizeObserver extends OriginalResizeObserver {
+          constructor(callback) {
+            super((entries, observer) => {
+              window.requestAnimationFrame(() => {
+                callback(entries, observer);
+              });
+            });
+          }
+        };
+      }
+
+      // Intercept and suppress benign third-party widget errors (e.g. cross-origin TradingView Script error / ResizeObserver)
+      window.addEventListener(
+        'error',
+        function (e) {
+          var msg = e && (e.message || (e.error && e.error.message)) ? (e.message || e.error.message) : '';
+          if (
+            typeof msg === 'string' &&
+            (msg === 'Script error.' ||
+             msg.indexOf('ResizeObserver loop completed with undelivered notifications') !== -1 ||
+             msg.indexOf('ResizeObserver loop limit exceeded') !== -1)
+          ) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            return true;
+          }
+        },
+        true
+      );
+    </script>
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />

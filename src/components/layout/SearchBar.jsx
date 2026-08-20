@@ -36,21 +36,7 @@ const SearchBar = ({ ticker, setTicker, handleSearch, queueInfo, lastUpdatedAt }
         </svg>
       </button>
       {queueInfo?.isPending && (
-        <div
-          style={{
-            position: 'absolute',
-            right: '3.5rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: '#93c5fd',
-            fontWeight: 500,
-            fontSize: '1rem',
-            background: 'rgba(0,0,0,0.7)',
-            borderRadius: '9999px',
-            padding: '0.25rem 0.75rem',
-            pointerEvents: 'none'
-          }}
-        >
+        <div className="search-queue-badge">
           {`Retrieving Data: ETA - ${formatEta(queueInfo.etaRemainingSeconds ?? queueInfo.etaSeconds)}`}
         </div>
       )}

@@ -5,7 +5,20 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from "@vercel/speed-insights/react"
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
+// Suppress benign third-party widget errors (e.g. TradingView Script error / ResizeObserver)
+window.addEventListener('error', (e) => {
+  const msg = typeof e.message === 'string' ? e.message : (e.error?.message || '');
+  if (
+    msg === 'Script error.' ||
+    msg.includes('ResizeObserver loop completed with undelivered notifications') ||
+    msg.includes('ResizeObserver loop limit exceeded')
+  ) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  }
+});
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

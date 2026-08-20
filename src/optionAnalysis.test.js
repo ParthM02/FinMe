@@ -1,4 +1,4 @@
-import { bsGreeks } from './optionAnalysis';
+import { bsGreeks, getNearestExpiryGroup } from './optionAnalysis';
 
 describe('optionAnalysis.bsGreeks delta', () => {
   test('put-call parity relationship for delta holds', () => {
@@ -22,5 +22,19 @@ describe('optionAnalysis.bsGreeks delta', () => {
     expect(call.delta).toBeLessThan(1);
     expect(put.delta).toBeLessThan(0);
     expect(put.delta).toBeGreaterThan(-1);
+  });
+
+  test('getNearestExpiryGroup selects nearest upcoming date', () => {
+    const mockRows = [
+      { expirygroup: 'February 13, 2026', strike: '100' },
+      { expirygroup: '', strike: '105' },
+      { expirygroup: 'August 21, 2026', strike: '100' },
+      { expirygroup: '', strike: '105' },
+      { expirygroup: 'September 18, 2026', strike: '100' }
+    ];
+
+    const refDate = new Date('2026-08-19T00:00:00Z');
+    const group = getNearestExpiryGroup(mockRows, refDate);
+    expect(group.key).toBe('August 21, 2026');
   });
 });

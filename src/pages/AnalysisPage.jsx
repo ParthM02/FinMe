@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../components/layout/SearchBar';
 import CachePromptModal from '../components/layout/CachePromptModal';
 import TradingViewWidget from '../components/widgets/TradingViewWidget';
@@ -8,9 +9,19 @@ import { useStockData } from '../hooks/useStockData';
 import { calculateAllScores } from '../utils/scoring';
 
 const AnalysisPage = () => {
-  const [ticker, setTicker] = useState('');
-  const [searchTicker, setSearchTicker] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTicker = searchParams.get('ticker')?.trim()?.toUpperCase() || '';
+  const [ticker, setTicker] = useState(initialTicker);
+  const [searchTicker, setSearchTicker] = useState(initialTicker);
   const [activeTab, setActiveTab] = useState('Fundamental');
+
+  useEffect(() => {
+    const param = searchParams.get('ticker')?.trim()?.toUpperCase();
+    if (param && param !== searchTicker) {
+      setTicker(param);
+      setSearchTicker(param);
+    }
+  }, [searchParams, searchTicker]);
 
   const { data: stockData, queueInfo, cachePrompt, acceptCached, requestRefresh, lastUpdatedAt } = useStockData(searchTicker, false);
 
@@ -24,6 +35,7 @@ const AnalysisPage = () => {
     if (!ticker) return;
     const next = ticker.trim().toUpperCase();
     if (!next) return;
+    setSearchParams({ ticker: next });
     // Allow refreshing the same symbol after cooldown.
     if (next === searchTicker) {
       setSearchTicker('');
