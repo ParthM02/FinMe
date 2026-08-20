@@ -1,70 +1,141 @@
-# Getting Started with Create React App
+# FinMe 📈
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> **Institutional-Grade Stock Analysis & Market Intelligence Platform**
 
-## Available Scripts
+FinMe is a modern, full-stack financial analytics application designed to make institutional-level equity and derivatives analysis accessible, intuitive, and actionable. It aggregates market data across fundamentals, technical indicators, options flow, and sentiment to deliver clear, actionable scoring alongside interactive visualizations.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## ✨ Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 1. Multi-Dimensional Scoring Engine
+FinMe automatically scores any analyzed equity on a scale from **0 (Bearish)** to **100 (Bullish)** across four key pillars:
+- **📊 Fundamental Score**: Evaluates short interest dynamics, Days to Cover (DTC) squeeze potential, and balance sheet / income statement financial ratios (P/E, ROE, margins, debt ratios).
+- **📉 Technical Score**: Combines Volume-Weighted Average Price (VWAP) relationships, 10-day RSI trend direction, RSI momentum crossovers (30/70 thresholds), and overbought/oversold levels.
+- **⚡ Options Score**: Analyzes near-term and mid-term Put/Call volume ratios, delta exposure asymmetry, and net options premium directional bias.
+- **📰 Sentiment Score**: Processes financial news headline sentiment via NLP, institutional accumulation/distribution patterns, and insider transaction filings.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 2. Advanced Options Flow & Greeks Analytics
+- **Put/Call Ratio Tracking**: Compares near-term vs. mid-term vs. far-term expiration volume.
+- **Black-Scholes Greek Engine**: Custom mathematical model computing real-time Delta, Gamma, Theta, and Vega across full option chains.
+- **Delta Asymmetry & Net Exposure**: Identifies whether market participants are heavily skewed toward call or put delta around the current spot price.
+- **Premium Flow Forecasting**: Estimates net bullish vs. bearish dollar premium deployed across option strikes.
+- **Interactive Open Interest & Volume Charts**: Visualize strike concentration and expiration groupings with interactive filtering.
 
-### `npm test`
+### 3. Real-Time Charts & Live Widgets
+- Embedded **TradingView Interactive Candlestick Charts** and financial company overview widgets.
+- Real-time **Ticker Tape Widget** tracking major indices and market movers.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 4. Smart Queueing & Caching System
+- **Supabase-Backed Job Queue**: Handles asynchronous API rate limits with live queue position tracking and dynamic countdown ETA estimates.
+- **Intelligent Response Cache**: Instant loads on previously analyzed tickers with an interactive prompt allowing users to choose between cached data or an on-demand fresh pull.
+- **Trending & Popular Tickers**: Real-time aggregation of the most analyzed tickers on the platform.
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🛠️ Tech Stack
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **Frontend**:
+  - [React 19](https://react.dev/)
+  - [React Router v6](https://reactrouter.com/) (Client-side routing)
+  - [Chart.js](https://www.chartjs.org/) & [React-ChartJS-2](https://react-chartjs-2.js.org/) (Interactive data visualizations)
+  - [TradingView Technical Widgets](https://www.tradingview.com/widget/)
+  - Vanilla CSS (Custom design system with dark-mode aesthetic)
+- **Backend & Serverless API**:
+  - [Vercel Serverless Functions](https://vercel.com/docs/functions) (`/api/stockdata`, `/api/populartickers`)
+  - [Supabase](https://supabase.com/) (PostgreSQL for queue management, data caching, and search telemetry)
+- **NLP & Quantitative Math**:
+  - [@xenova/transformers](https://huggingface.co/docs/transformers.js) (DistilBERT SST-2 sentiment pipeline)
+  - Custom Black-Scholes implementation for options Greeks and probability density modeling
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## 📁 Project Structure
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```text
+FinMe/
+├── api/                     # Vercel Serverless API endpoints
+│   ├── optiondata.js        # Option chain fetching endpoint
+│   ├── populartickers.js    # Popular & trending search telemetry endpoint
+│   └── stockdata.js         # Core stock data fetching, caching & queue handler
+├── public/                  # Static assets & HTML template
+├── src/
+│   ├── components/
+│   │   ├── layout/          # Header, Footer, SearchBar, CachePromptModal
+│   │   ├── reports/         # FundamentalView, TechnicalView, OptionsView, SentimentView
+│   │   └── widgets/         # ScoreCard, TradingViewWidget, TickerTapeWidget
+│   ├── hooks/               # Custom React hooks (useStockData, useCooldown)
+│   ├── pages/               # Application pages (HomePage, AnalysisPage)
+│   ├── utils/               # Scoring models and helper utilities
+│   ├── App.jsx              # Main router & layout container
+│   ├── index.js             # Application entry point
+│   ├── optionAnalysis.js    # Options mathematics & Black-Scholes engine
+│   ├── sentimentAnalysis.js # NLP headline sentiment analysis
+│   └── technicalAnalysis.js # RSI, VWAP & technical indicator logic
+└── package.json
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🚀 Getting Started
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Prerequisites
 
-## Learn More
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [npm](https://www.npmjs.com/)
+- [Vercel CLI](https://vercel.com/docs/cli) (optional, recommended for testing serverless API routes locally)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 1. Clone & Install Dependencies
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+git clone https://github.com/ParthM02/FinMe.git
+cd FinMe
+npm install
+```
 
-### Code Splitting
+### 2. Configure Environment Variables
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Create a `.env.local` file in the root directory and add your Supabase credentials:
 
-### Analyzing the Bundle Size
+```env
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_PUBLIC_KEY=your_supabase_public_key
+SUPABASE_QUEUE_TABLE=API Queue
+SUPABASE_CACHE_TABLE=API Cache
+SUPABASE_POPULAR_TABLE=Popular Tickers
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+# Optional API Keys
+FRED_KEY=your_fred_api_key
+```
 
-### Making a Progressive Web App
+### 3. Run Locally
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+To run the full stack with Vercel Serverless API routes locally:
 
-### Advanced Configuration
+```bash
+npx vercel dev
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Or to run only the React development server:
 
-### Deployment
+```bash
+npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Open [http://localhost:3000](http://localhost:3000) to view the application in your browser.
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🧪 Available Scripts
+
+- `npm start` – Starts the development server.
+- `npm test` – Runs unit and integration test suites in watch mode.
+- `npm run build` – Builds an optimized production bundle in the `build/` directory.
+- `npx vercel dev` – Runs the local development server with full serverless `/api` route emulation.
+
+---
+
+## ⚠️ Disclaimer
+
+*FinMe is built for informational and educational purposes only. Nothing contained within this platform constitutes financial, investment, or trading advice. Always do your own research or consult with a licensed financial professional before making investment decisions.*
