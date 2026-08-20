@@ -45,14 +45,14 @@ const HomePage = () => {
   }, []);
 
   const handleSelectTicker = (ticker) => {
-    navigate(`/?ticker=${encodeURIComponent(ticker)}`);
+    navigate(`/analysis?ticker=${encodeURIComponent(ticker)}`);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const clean = searchInput.trim().toUpperCase();
     if (clean) {
-      navigate(`/?ticker=${encodeURIComponent(clean)}`);
+      navigate(`/analysis?ticker=${encodeURIComponent(clean)}`);
     }
   };
 

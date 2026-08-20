@@ -14,7 +14,7 @@ const Header = () => {
     <header className="app-header">
       <div className="header-content">
         <div className="logo-container">
-          <NavLink to="/home" className="logo-link">
+          <NavLink to="/" className="logo-link">
             <span className="logo">FinMe</span>
           </NavLink>
         </div>
@@ -28,10 +28,10 @@ const Header = () => {
           </button>
           <nav className="navigation">
             <NavLink className="nav-button" to="/" end>
-              Analysis
-            </NavLink>
-            <NavLink className="nav-button" to="/home">
               Home
+            </NavLink>
+            <NavLink className="nav-button" to="/analysis">
+              Analysis
             </NavLink>
             <button className="nav-button nav-button-edge" type="button" disabled>
               Edge (Soon)
@@ -97,16 +97,16 @@ const Header = () => {
               end
               onClick={() => setMenuOpen(false)}
             >
-              <span className="mobile-nav-icon">📊</span>
-              <span>Analysis</span>
+              <span className="mobile-nav-icon">🏠</span>
+              <span>Home</span>
             </NavLink>
             <NavLink
               className="mobile-nav-link"
-              to="/home"
+              to="/analysis"
               onClick={() => setMenuOpen(false)}
             >
-              <span className="mobile-nav-icon">🏠</span>
-              <span>Home</span>
+              <span className="mobile-nav-icon">📊</span>
+              <span>Analysis</span>
             </NavLink>
             <div className="mobile-nav-link disabled">
               <span className="mobile-nav-icon">⚡</span>
