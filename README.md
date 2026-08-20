@@ -45,6 +45,7 @@ FinMe automatically scores any analyzed equity on a scale from **0 (Bearish)** t
 - **Backend & Serverless API**:
   - [Vercel Serverless Functions](https://vercel.com/docs/functions) (`/api/stockdata`, `/api/populartickers`)
   - [Supabase](https://supabase.com/) (PostgreSQL for queue management, data caching, and search telemetry)
+      - Supabase code is hosted in a private repo.
 - **NLP & Quantitative Math**:
   - [@xenova/transformers](https://huggingface.co/docs/transformers.js) (DistilBERT SST-2 sentiment pipeline)
   - Custom Black-Scholes implementation for options Greeks and probability density modeling
