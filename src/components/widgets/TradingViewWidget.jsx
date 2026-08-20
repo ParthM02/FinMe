@@ -34,6 +34,8 @@ const TradingViewWidget = ({ type, symbol }) => {
 
     const widgetDiv = document.createElement('div');
     widgetDiv.className = 'tradingview-widget-container__widget';
+    widgetDiv.style.width = '100%';
+    widgetDiv.style.height = '100%';
     currentContainer.appendChild(widgetDiv);
 
     const script = document.createElement('script');
@@ -55,7 +57,7 @@ const TradingViewWidget = ({ type, symbol }) => {
       script.innerHTML = JSON.stringify({
         symbols: [[symbol.toUpperCase(), `${tvSymbol}|1D`]],
         width: '100%',
-        height: '384',
+        height: '100%',
         colorTheme: 'dark',
         isTransparent: true,
         autosize: true,

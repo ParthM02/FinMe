@@ -446,12 +446,18 @@ body {
 }
 
 .chart-card {
-    height: 24rem;
+    height: 100%;
+    min-height: 460px;
     width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     box-sizing: border-box;
+    overflow: hidden;
+    padding: 0.5rem;
+}
+
+.chart-card .card-content {
+    height: 100%;
+    width: 100%;
+    justify-content: flex-start;
 }
 
 .full-width-card {
@@ -520,6 +526,23 @@ body {
     width: 100%;
     height: 100%;
     min-width: 0;
+    min-height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.tradingview-widget-container__widget {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 100%;
+}
+
+.tradingview-widget-container iframe {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    border: none !important;
 }
 
 /* Put/Call Ratio Widget */
@@ -1723,8 +1746,10 @@ body {
     }
 
     .chart-card {
-        height: 22rem;
-        min-height: 280px;
+        height: 480px;
+        min-height: 450px;
+        padding: 0.4rem;
+        overflow: hidden;
     }
 
     .financial-ratios-section {
@@ -1821,8 +1846,10 @@ body {
     }
 
     .chart-card {
-        height: 19rem;
-        min-height: 250px;
+        height: 470px;
+        min-height: 440px;
+        padding: 0.35rem;
+        overflow: hidden;
     }
 
     .tabs-container {
