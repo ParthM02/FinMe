@@ -64,7 +64,7 @@ const HomePage = () => {
 
       <section className="home-hero-section">
         <div className="home-hero-badge">
-          <span>🔥</span> Real-time Market Intelligence
+          <span>🔥</span> Supreme Market Intelligence
         </div>
         <h1 className="home-hero-title">
           Institutional-Grade Stock Analysis, <span className="gradient-text">Simplified</span>
