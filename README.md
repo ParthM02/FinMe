@@ -41,6 +41,7 @@ FinMe automatically scores any analyzed equity on a scale from **0 (Bearish)** t
   - [Chart.js](https://www.chartjs.org/) & [React-ChartJS-2](https://react-chartjs-2.js.org/) (Interactive data visualizations)
   - [TradingView Technical Widgets](https://www.tradingview.com/widget/)
   - Vanilla CSS (Custom design system with dark-mode aesthetic)
+      - Yes, I know all the CSS is housed in one file, which is atrocious. I'll fix that eventually.
 - **Backend & Serverless API**:
   - [Vercel Serverless Functions](https://vercel.com/docs/functions) (`/api/stockdata`, `/api/populartickers`)
   - [Supabase](https://supabase.com/) (PostgreSQL for queue management, data caching, and search telemetry)
